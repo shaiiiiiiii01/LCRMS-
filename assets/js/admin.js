@@ -350,6 +350,99 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    const caseResultSelectors = ".admin-table-wrap, .cases-pagination";
+
+    const setAdminCaseResultsLoading = (panel, isLoading) => {
+        panel.querySelectorAll(caseResultSelectors).forEach((element) => {
+            element.classList.toggle("is-refreshing", isLoading);
+        });
+    };
+
+    const buildAdminCaseResultsUrl = (form, sourceUrl = null) => {
+        const panel = form.closest(".cases-panel");
+        const baseUrl = new URL(sourceUrl || panel?.dataset.caseListUrl || window.location.href, window.location.href);
+        const actionUrl = new URL(form.action || window.location.href, window.location.href);
+        const params = new URLSearchParams(baseUrl.search);
+
+        new FormData(form).forEach((value, key) => {
+            const nextValue = String(value).trim();
+
+            if (nextValue === "") {
+                params.delete(key);
+                return;
+            }
+
+            params.set(key, nextValue);
+        });
+
+        baseUrl.pathname = actionUrl.pathname;
+        baseUrl.search = params.toString();
+        baseUrl.hash = "";
+
+        return baseUrl;
+    };
+
+    const refreshAdminCaseResults = async (form, sourceUrl = null) => {
+        const panel = form.closest(".cases-panel");
+
+        if (!panel) {
+            form.submit();
+            return;
+        }
+
+        const nextUrl = buildAdminCaseResultsUrl(form, sourceUrl);
+
+        if (panel.caseResultsAbortController) {
+            panel.caseResultsAbortController.abort();
+        }
+
+        const abortController = new AbortController();
+        panel.caseResultsAbortController = abortController;
+        setAdminCaseResultsLoading(panel, true);
+
+        try {
+            const response = await fetch(nextUrl, {
+                headers: {
+                    Accept: "text/html",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                signal: abortController.signal,
+            });
+
+            if (!response.ok) {
+                throw new Error("Unable to load cases.");
+            }
+
+            const html = await response.text();
+            const nextDocument = new DOMParser().parseFromString(html, "text/html");
+            const nextTable = nextDocument.querySelector(".admin-table-wrap");
+            const nextPagination = nextDocument.querySelector(".cases-pagination");
+            const currentTable = panel.querySelector(".admin-table-wrap");
+            const currentPagination = panel.querySelector(".cases-pagination");
+
+            if (!nextTable || !nextPagination || !currentTable || !currentPagination) {
+                throw new Error("Case results were not found.");
+            }
+
+            currentTable.replaceWith(nextTable);
+            currentPagination.replaceWith(nextPagination);
+            panel.dataset.caseListUrl = `${nextUrl.pathname}${nextUrl.search}`;
+
+            updateCaseFilterCards(nextUrl.searchParams.get("status") || "");
+            initializeAdminCaseRows(panel);
+            initializeAdminCasePagination(panel);
+        } catch (error) {
+            if (error.name !== "AbortError") {
+                window.location.href = nextUrl;
+            }
+        } finally {
+            if (panel.caseResultsAbortController === abortController) {
+                panel.caseResultsAbortController = null;
+                setAdminCaseResultsLoading(panel, false);
+            }
+        }
+    };
+
     const initializeAdminCaseFilters = (root = document) => {
         root.querySelectorAll("[data-admin-case-filters]").forEach((form) => {
             if (form.dataset.caseFiltersReady === "true") {
@@ -357,18 +450,35 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             form.dataset.caseFiltersReady = "true";
-            const searchInput = form.querySelector("[data-admin-case-search]");
+            const panel = form.closest(".cases-panel");
+
+            if (panel && !panel.dataset.caseListUrl) {
+                panel.dataset.caseListUrl = `${window.location.pathname}${window.location.search}`;
+            }
+
+            const searchInputs = form.querySelectorAll("[data-admin-case-search]");
             let searchTimer = null;
 
-            if (searchInput) {
-                searchInput.addEventListener("input", () => {
-                    window.clearTimeout(searchTimer);
-                    searchTimer = window.setTimeout(() => form.submit(), 300);
+            if (searchInputs.length > 0) {
+                searchInputs.forEach((searchInput) => {
+                    searchInput.addEventListener("input", () => {
+                        window.clearTimeout(searchTimer);
+                        searchTimer = window.setTimeout(() => refreshAdminCaseResults(form), 180);
+                    });
                 });
             }
 
             form.querySelectorAll("[data-admin-case-filter]").forEach((filter) => {
-                filter.addEventListener("change", () => form.submit());
+                filter.addEventListener("change", () => refreshAdminCaseResults(form));
+            });
+
+            form.addEventListener("submit", (event) => {
+                if (event.submitter?.classList.contains("export-button")) {
+                    return;
+                }
+
+                event.preventDefault();
+                refreshAdminCaseResults(form);
             });
         });
     };
@@ -406,9 +516,36 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
+    const initializeAdminCasePagination = (root = document) => {
+        root.querySelectorAll("[data-case-page-url]").forEach((button) => {
+            if (button.dataset.casePaginationReady === "true") {
+                return;
+            }
+
+            button.dataset.casePaginationReady = "true";
+            button.addEventListener("click", (event) => {
+                const form = document.querySelector("[data-admin-case-filters]");
+
+                if (!form) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                refreshAdminCaseResults(form, button.dataset.casePageUrl || null);
+            }, true);
+        });
+    };
+
     const updateCaseFilterCards = (status) => {
+        const form = document.querySelector("[data-admin-case-filters]");
+        const hasSearchFilter = Array.from(form?.querySelectorAll("[data-admin-case-search]") || []).some((input) => input.value.trim() !== "");
+
         document.querySelectorAll("[data-case-filter-card]").forEach((card) => {
-            card.classList.toggle("is-active", (card.dataset.caseFilterStatus || "") === status);
+            const cardStatus = card.dataset.caseFilterStatus || "";
+            const isUnfilteredTotal = cardStatus === "" && status === "" && !hasSearchFilter;
+
+            card.classList.toggle("is-active", isUnfilteredTotal || (cardStatus !== "" && cardStatus === status));
         });
     };
 
@@ -454,6 +591,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 updateCaseFilterCards(nextStatus);
                 initializeAdminCaseFilters(casesPanel);
                 initializeAdminCaseRows(casesPanel);
+                initializeAdminCasePagination(casesPanel);
+                casesPanel.dataset.caseListUrl = `${nextUrl.pathname}${nextUrl.search}`;
                 window.history.pushState({}, "", `${nextUrl.pathname}${nextUrl.search}#caseSearch`);
                 scrollToCaseSearch();
             } catch (error) {
@@ -465,6 +604,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     initializeAdminCaseFilters();
+    initializeAdminCasePagination();
 
     const dashboardCaseRows = document.querySelectorAll("[data-dashboard-case-row]");
     const dashboardViewButton = document.querySelector("[data-dashboard-view-selected]");

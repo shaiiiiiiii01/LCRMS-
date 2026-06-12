@@ -15,7 +15,7 @@ $caseModel = new CaseModel(lcrms_db());
 $caseSearch = trim((string) ($_GET['search'] ?? ''));
 $caseStatus = trim((string) ($_GET['status'] ?? ''));
 $casePage = max(1, (int) ($_GET['page'] ?? 1));
-$casePerPage = 5;
+$casePerPage = 20;
 $caseCounts = $caseModel->adminCounts();
 $caseTotal = $caseModel->countForAdmin($caseSearch, $caseStatus);
 $caseTotalPages = max(1, (int) ceil($caseTotal / $casePerPage));
@@ -181,23 +181,17 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
                     </div>
 
                     <div class="cases-pagination">
-                        <p>Showing <strong><?php echo number_format($caseStart); ?> to <?php echo number_format($caseEnd); ?></strong> of <strong><?php echo number_format($caseTotal); ?></strong> entries</p>
                         <div class="pagination-buttons">
-                            <button type="button" aria-label="Previous page" <?php echo $casePage <= 1 ? 'disabled' : 'onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($casePage - 1, $caseSearch, $caseStatus), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
+                            <button type="button" aria-label="Previous page" <?php echo $casePage <= 1 ? 'disabled' : 'data-case-page-url="' . htmlspecialchars(admin_case_page_url($casePage - 1, $caseSearch, $caseStatus), ENT_QUOTES) . '" onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($casePage - 1, $caseSearch, $caseStatus), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
                             <?php foreach (admin_case_pagination_pages($casePage, $caseTotalPages) as $page): ?>
                                 <?php if (is_string($page)): ?>
                                     <span>...</span>
                                 <?php else: ?>
-                                    <button class="<?php echo $page === $casePage ? 'is-active' : ''; ?>" type="button" onclick="window.location.href='<?php echo htmlspecialchars(admin_case_page_url((int) $page, $caseSearch, $caseStatus), ENT_QUOTES); ?>'"><?php echo $page; ?></button>
+                                    <button class="<?php echo $page === $casePage ? 'is-active' : ''; ?>" type="button" data-case-page-url="<?php echo htmlspecialchars(admin_case_page_url((int) $page, $caseSearch, $caseStatus), ENT_QUOTES); ?>" onclick="window.location.href='<?php echo htmlspecialchars(admin_case_page_url((int) $page, $caseSearch, $caseStatus), ENT_QUOTES); ?>'"><?php echo $page; ?></button>
                                 <?php endif; ?>
                             <?php endforeach; ?>
-                            <button type="button" aria-label="Next page" <?php echo $casePage >= $caseTotalPages ? 'disabled' : 'onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($casePage + 1, $caseSearch, $caseStatus), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
+                            <button type="button" aria-label="Next page" <?php echo $casePage >= $caseTotalPages ? 'disabled' : 'data-case-page-url="' . htmlspecialchars(admin_case_page_url($casePage + 1, $caseSearch, $caseStatus), ENT_QUOTES) . '" onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($casePage + 1, $caseSearch, $caseStatus), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
                         </div>
-                        <label class="sort-control">Sort by:
-                            <select disabled>
-                                <option>Newest Cases First</option>
-                            </select>
-                        </label>
                     </div>
                 </section>
 

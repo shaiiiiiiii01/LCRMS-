@@ -712,6 +712,18 @@ svg {
     transition: opacity 160ms ease;
 }
 
+.admin-table-wrap,
+.cases-pagination {
+    transition: opacity 160ms ease, filter 160ms ease;
+}
+
+.admin-table-wrap.is-refreshing,
+.cases-pagination.is-refreshing {
+    opacity: .55;
+    filter: saturate(.85);
+    pointer-events: none;
+}
+
 .dashboard-stat-copy {
     min-width: 0;
     display: flex;
@@ -2752,8 +2764,8 @@ body.admin-modal-open {
 }
 
 .user-table-wrap {
-    min-height: 558px;
-    overflow-x: auto;
+    max-height: 430px;
+    overflow: auto;
     padding: 0;
     border: 1px solid #d8e0ea;
     border-radius: 8px;
@@ -2786,7 +2798,7 @@ body.admin-modal-open {
 }
 
 .user-management-table td {
-    height: 95px;
+    height: 64px;
     color: #1f242d;
     background: #fff;
     font-size: 14px;
