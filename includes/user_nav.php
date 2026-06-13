@@ -28,8 +28,9 @@ $navItems = [
 
 <aside class="user-sidebar" id="userSidebar" aria-label="User navigation">
     <div class="sidebar-brand">
-        <img src="<?php echo $assetBase; ?>assets/images/old-cab-logo.png" alt="Barangay Old Cabalan logo" class="sidebar-logo">
+        <img src="<?php echo $assetBase; ?>assets/images/oldcab_logo.png" alt="Barangay Old Cabalan logo" class="sidebar-logo">
         <div class="sidebar-title">LCRMS</div>
+        <p>User Portal</p>
     </div>
 
     <nav class="sidebar-menu">
@@ -40,19 +41,6 @@ $navItems = [
             </a>
         <?php endforeach; ?>
     </nav>
-
-    <div class="sidebar-account" aria-label="Signed in user">
-        <span class="sidebar-account-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20 21a8 8 0 0 0-16 0"></path>
-                <circle cx="12" cy="8" r="4"></circle>
-            </svg>
-        </span>
-        <div>
-            <strong><?php echo htmlspecialchars($userNavUsername); ?></strong>
-            <span><?php echo htmlspecialchars($userNavRole); ?></span>
-        </div>
-    </div>
 
     <a class="sidebar-link sidebar-logout" href="logout.php">
         <span class="sidebar-icon">

@@ -61,7 +61,7 @@ function dashboard_entry_status_class(string $status): string
     <title>Dashboard | LCRMS</title>
     <link rel="stylesheet" href="../assets/css/user.css">
 </head>
-<body>
+<body class="user-dashboard-page">
     <div class="user-layout">
         <?php include '../includes/user_nav.php'; ?>
 

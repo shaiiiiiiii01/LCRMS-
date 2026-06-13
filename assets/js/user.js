@@ -3,21 +3,41 @@ document.addEventListener("DOMContentLoaded", () => {
     const passwordInput = document.querySelector("#password");
 
     if (passwordToggle && passwordInput) {
+        const setPasswordIcon = (isHidden) => {
+            passwordToggle.innerHTML = isHidden
+                ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle><path d="M4 4l16 16"></path></svg>'
+                : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+        };
+
+        setPasswordIcon(true);
         passwordToggle.addEventListener("click", () => {
             const isPassword = passwordInput.type === "password";
             passwordInput.type = isPassword ? "text" : "password";
             passwordToggle.setAttribute("aria-label", isPassword ? "Hide password" : "Show password");
+            setPasswordIcon(!isPassword);
         });
     }
 
     document.querySelectorAll("[data-sidebar-toggle]").forEach((button) => {
         button.addEventListener("click", () => {
-            document.body.classList.toggle("sidebar-open");
+            if (window.matchMedia("(max-width: 900px)").matches) {
+                document.body.classList.toggle("sidebar-open");
+                return;
+            }
+
+            document.body.classList.toggle("sidebar-collapsed");
         });
     });
 
     document.querySelectorAll("[data-sidebar-close]").forEach((backdrop) => {
         backdrop.addEventListener("click", () => {
+            document.body.classList.remove("sidebar-open");
+        });
+    });
+
+    document.querySelectorAll(".add-case-card").forEach((card) => {
+        card.addEventListener("click", (event) => {
+            event.stopPropagation();
             document.body.classList.remove("sidebar-open");
         });
     });

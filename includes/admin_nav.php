@@ -28,7 +28,7 @@ $adminNavItems = [
 
 <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin navigation">
     <div class="admin-sidebar-brand">
-        <img src="<?php echo $assetBase; ?>assets/images/old-cab-logo.png" alt="Barangay Old Cabalan logo" class="admin-sidebar-logo">
+        <img src="<?php echo $assetBase; ?>assets/images/oldcab_logo.png" alt="Barangay Old Cabalan logo" class="admin-sidebar-logo">
         <div class="admin-sidebar-title">LCRMS</div>
         <p>Administrator Portal</p>
     </div>

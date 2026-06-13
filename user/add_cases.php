@@ -4,7 +4,7 @@ require_user_login();
 
 $userActive = 'add_cases';
 $pageTitle = 'Add New Case';
-$footerYear = '2024';
+$footerYear = '2026';
 $assetBase = '../';
 $caseNumberPreview = 'L-' . date('Y') . '-0001';
 

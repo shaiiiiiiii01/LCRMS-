@@ -101,15 +101,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login | LCRMS</title>
-    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin.css?v=4">
 </head>
 <body class="admin-login-page">
     <main class="admin-login-screen">
         <section class="admin-login-card" aria-labelledby="adminLoginTitle">
             <div class="admin-login-brand">
-                <img src="../assets/images/old-cab-logo.png" alt="Barangay Old Cabalan logo" class="admin-login-logo">
+                <img src="../assets/images/oldcab_logo.png" alt="Barangay Old Cabalan logo" class="admin-login-logo">
                 <h1 id="adminLoginTitle">Log In to LCRMS</h1>
-                <p>Lupong Case and Record Management System</p>
+                <p>Lupon Case and Record Management System</p>
                 <span class="portal-badge">Administrator Portal</span>
             </div>
 
@@ -125,7 +125,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <path d="M20 21a8 8 0 0 0-16 0"></path>
                             <circle cx="12" cy="8" r="4"></circle>
                         </svg>
-                        <input id="adminUsername" name="username" type="text" placeholder="Enter your username" autocomplete="username" value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>" required>
+                        <input id="adminUsername" name="username" type="text" placeholder="Username" autocomplete="username" value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>" required>
+                        <span class="admin-input-side-spacer" aria-hidden="true"></span>
                     </div>
                 </div>
 
@@ -136,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <rect x="5" y="11" width="14" height="10" rx="2"></rect>
                             <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
                         </svg>
-                        <input id="adminPassword" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+                        <input id="adminPassword" name="password" type="password" placeholder="Password" autocomplete="current-password" required>
                         <button class="admin-input-icon-button" type="button" data-admin-toggle-password aria-label="Show password">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
@@ -151,14 +152,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="checkbox" name="remember">
                         <span>Remember me</span>
                     </label>
-                    <a href="#">Forgot password?</a>
                 </div>
 
                 <button class="admin-primary-button" type="submit">
                     <span>Log In</span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M9 18l6-6-6-6"></path>
-                    </svg>
                 </button>
             </form>
 

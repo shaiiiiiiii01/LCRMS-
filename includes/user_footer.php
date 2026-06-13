@@ -3,9 +3,8 @@ $footerYear = $footerYear ?? '2026';
 ?>
 
 <footer class="app-footer">
-    <p>&copy; <?php echo htmlspecialchars($footerYear); ?> Lupong Case and Record Management System. All Rights Reserved.</p>
+    <p>&copy; <?php echo htmlspecialchars($footerYear); ?> Barangay Old Cabalan. All Rights Reserved.</p>
     <div class="footer-links">
-        <a href="#">Privacy Policy</a>
-        <span>System Status: Online</span>
+        <span>System Status: <span class="system-status-online">Online</span></span>
     </div>
 </footer>
