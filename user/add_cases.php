@@ -87,8 +87,17 @@ try {
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="natureOfCase">Nature of Case</label>
-                                        <input id="natureOfCase" name="nature_of_case" type="text" placeholder="e.g., Civil">
+                                        <span class="case-choice-label" id="natureOfCaseLabel">Nature of Case</span>
+                                        <div class="case-choice-boxes" role="radiogroup" aria-labelledby="natureOfCaseLabel" data-choice-boxes>
+                                            <label class="case-choice-box" for="natureCivil">
+                                                <input id="natureCivil" name="nature_of_case" type="radio" value="Civil">
+                                                <span>Civil</span>
+                                            </label>
+                                            <label class="case-choice-box" for="natureCriminal">
+                                                <input id="natureCriminal" name="nature_of_case" type="radio" value="Criminal">
+                                                <span>Criminal</span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </section>

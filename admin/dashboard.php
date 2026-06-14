@@ -25,6 +25,17 @@ if ($dashboardPage > $dashboardTotalPages) {
 $dashboardCases = $caseModel->listForAdmin($dashboardSearch, $dashboardStatus, $dashboardPage, $dashboardPerPage);
 $dashboardStart = $dashboardTotal === 0 ? 0 : (($dashboardPage - 1) * $dashboardPerPage) + 1;
 $dashboardEnd = min($dashboardTotal, $dashboardStart + count($dashboardCases) - 1);
+$dashboardExportParams = [];
+
+if ($dashboardSearch !== '') {
+    $dashboardExportParams['search'] = $dashboardSearch;
+}
+
+if ($dashboardStatus !== '') {
+    $dashboardExportParams['status'] = $dashboardStatus;
+}
+
+$dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' : '?' . http_build_query($dashboardExportParams));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -112,7 +123,19 @@ $dashboardEnd = min($dashboardTotal, $dashboardStart + count($dashboardCases) - 
                 </section>
 
                 <section class="dashboard-case-management" aria-labelledby="caseManagementTitle">
-                    <h2 id="caseManagementTitle">Case Management</h2>
+                    <div class="dashboard-section-head">
+                        <h2 id="caseManagementTitle">Case Management</h2>
+                        <div class="cases-toolbar-actions dashboard-shortcut-actions">
+                            <a class="export-button" href="<?php echo htmlspecialchars($dashboardExportUrl); ?>">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5M12 15V3"></path></svg>
+                                Export
+                            </a>
+                            <button class="import-button" type="button" data-open-case-import>
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M17 8l-5-5-5 5M12 3v12"></path></svg>
+                                Import
+                            </button>
+                        </div>
+                    </div>
 
                     <form class="dashboard-filter-card" action="dashboard.php" method="get" data-admin-case-filters data-admin-dashboard-case-selection>
                         <div class="admin-search-field dashboard-search">
@@ -148,6 +171,7 @@ $dashboardEnd = min($dashboardTotal, $dashboardStart + count($dashboardCases) - 
                                         <th>Case<br>No.</th>
                                         <th>Case Title</th>
                                         <th>Complainant Title</th>
+                                        <th>Nature</th>
                                         <th>Date Filed</th>
                                         <th>Status</th>
                                     </tr>
@@ -155,7 +179,7 @@ $dashboardEnd = min($dashboardTotal, $dashboardStart + count($dashboardCases) - 
                                 <tbody>
                                     <?php if ($dashboardCases === []): ?>
                                         <tr>
-                                            <td colspan="5">No case records found.</td>
+                                            <td colspan="6">No case records found.</td>
                                         </tr>
                                     <?php else: ?>
                                         <?php foreach ($dashboardCases as $case): ?>
@@ -163,6 +187,7 @@ $dashboardEnd = min($dashboardTotal, $dashboardStart + count($dashboardCases) - 
                                                 <td><?php echo htmlspecialchars((string) $case['case_number']); ?></td>
                                                 <td><?php echo htmlspecialchars((string) $case['case_title']); ?></td>
                                                 <td><?php echo htmlspecialchars((string) $case['complainant_title']); ?></td>
+                                                <td><?php echo htmlspecialchars((string) ($case['nature_of_case'] ?? '')); ?></td>
                                                 <td><?php echo htmlspecialchars(admin_case_date_label($case['date_filed'] ?? null)); ?></td>
                                                 <td><span class="case-badge <?php echo admin_case_badge_class((string) $case['case_status']); ?>"><?php echo htmlspecialchars(admin_case_status_label((string) $case['case_status'])); ?></span></td>
                                             </tr>
@@ -187,6 +212,8 @@ $dashboardEnd = min($dashboardTotal, $dashboardStart + count($dashboardCases) - 
                             </div>
                         </div>
                     </div>
+
+                    <?php include __DIR__ . '/case_import_modal.php'; ?>
                 </section>
             </main>
 

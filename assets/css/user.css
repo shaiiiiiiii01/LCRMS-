@@ -1086,7 +1086,8 @@ body.sidebar-collapsed .user-sidebar {
 }
 
 .entries-table td:nth-child(3),
-.entries-table td:nth-child(5) {
+.entries-table td:nth-child(4),
+.entries-table td:nth-child(6) {
     color: #465166;
     font-weight: 600;
 }
@@ -1515,6 +1516,12 @@ body.sidebar-collapsed .user-sidebar {
     font-weight: 700;
 }
 
+.case-choice-label {
+    color: #151a23;
+    font-size: 14px;
+    font-weight: 700;
+}
+
 .case-form-grid input,
 .case-form-grid select,
 .case-form-grid textarea {
@@ -1528,6 +1535,59 @@ body.sidebar-collapsed .user-sidebar {
 .case-form-grid input.is-invalid,
 .case-form-grid select.is-invalid,
 .case-form-grid textarea.is-invalid {
+    border-color: #ff4f5f;
+    background: #fffafa;
+    box-shadow: 0 0 0 3px rgba(255, 79, 95, 0.1);
+}
+
+.case-choice-boxes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.case-choice-box {
+    position: relative;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.case-choice-box input {
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.case-choice-box span {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    border: 1px solid #dbe2eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #536177;
+    font-weight: 800;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.case-choice-box input:checked + span {
+    border-color: var(--blue);
+    background: #edf7ff;
+    color: #125ca8;
+    box-shadow: 0 0 0 3px rgba(38, 141, 240, 0.12);
+}
+
+.case-choice-box input:focus-visible + span {
+    outline: 2px solid rgba(38, 141, 240, 0.32);
+    outline-offset: 2px;
+}
+
+.case-choice-boxes.is-invalid .case-choice-box span {
     border-color: #ff4f5f;
     background: #fffafa;
     box-shadow: 0 0 0 3px rgba(255, 79, 95, 0.1);

@@ -57,6 +57,10 @@ $assetBase = '../';
                             <label for="adminProfilePassword">Password</label>
                             <input id="adminProfilePassword" type="text" autocomplete="new-password" data-admin-profile-password>
                         </div>
+                        <p class="form-info-alert admin-password-note">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>
+                            <span>Note: Save your password because you will not be able to access it again.</span>
+                        </p>
                         <p class="form-alert" data-admin-profile-error hidden></p>
                         <div class="admin-profile-actions">
                             <button class="admin-primary-button compact" type="submit" data-admin-profile-submit>Edit</button>

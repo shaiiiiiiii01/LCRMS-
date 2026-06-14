@@ -129,6 +129,7 @@ function dashboard_entry_status_class(string $status): string
                                     <th>Case Number</th>
                                     <th>Case Title</th>
                                     <th>Complainant Title</th>
+                                    <th>Nature</th>
                                     <th>Case Status</th>
                                     <th>Date Filed</th>
                                 </tr>
@@ -136,7 +137,7 @@ function dashboard_entry_status_class(string $status): string
                             <tbody>
                                 <?php if ($recentCases === []): ?>
                                     <tr>
-                                        <td class="entries-empty" colspan="5">No case records found.</td>
+                                        <td class="entries-empty" colspan="6">No case records found.</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($recentCases as $case): ?>
@@ -144,6 +145,7 @@ function dashboard_entry_status_class(string $status): string
                                             <td><a href="#" data-case-detail-link><?php echo htmlspecialchars((string) $case['case_number']); ?></a></td>
                                             <td><?php echo htmlspecialchars((string) $case['case_title']); ?></td>
                                             <td><?php echo htmlspecialchars((string) $case['complainant_title']); ?></td>
+                                            <td><?php echo htmlspecialchars((string) ($case['nature_of_case'] ?? '')); ?></td>
                                             <td><span class="status-pill <?php echo dashboard_entry_status_class((string) $case['case_status']); ?>"><?php echo htmlspecialchars((string) $case['case_status']); ?></span></td>
                                             <td><?php echo htmlspecialchars(dashboard_entry_date_label($case['date_filed'] ?? null)); ?></td>
                                         </tr>

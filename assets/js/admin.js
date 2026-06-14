@@ -136,6 +136,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 option.selected = choice.value === fieldValue;
                 field.appendChild(option);
             });
+        } else if (options.type === "choice-boxes") {
+            field = document.createElement("div");
+            field.className = "case-choice-boxes";
+            field.setAttribute("role", "radiogroup");
+
+            const choices = options.choices || [];
+            const normalizedFieldValue = String(fieldValue).trim().toLowerCase();
+
+            choices.forEach((choice) => {
+                const choiceLabel = document.createElement("label");
+                const input = document.createElement("input");
+                const labelText = document.createElement("span");
+
+                choiceLabel.className = "case-choice-box";
+                input.type = "radio";
+                input.name = options.name || "";
+                input.value = choice.value;
+                input.checked = String(choice.value).toLowerCase() === normalizedFieldValue;
+                input.disabled = !options.editable;
+                labelText.textContent = choice.label;
+                choiceLabel.append(input, labelText);
+                field.appendChild(choiceLabel);
+            });
         } else {
             field = document.createElement("input");
             field.type = options.type === "date" ? "date" : "text";
@@ -143,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
             field.readOnly = !options.editable;
         }
 
-        if (options.name) {
+        if (options.name && options.type !== "choice-boxes") {
             field.name = options.name;
         }
 
@@ -211,7 +234,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     createAdminCaseDetailField("Case Number", caseData.case_number),
                     createAdminCaseDetailField("Case Title", caseData.case_title, { name: "case_title", editable: true, wide: true }),
                     createAdminCaseDetailField("Complainant Title", caseData.complainant_title, { name: "complainant_title", editable: true }),
-                    createAdminCaseDetailField("Nature of Case", caseData.nature_of_case, { name: "nature_of_case", editable: true }),
+                    createAdminCaseDetailField("Nature of Case", caseData.nature_of_case, {
+                        type: "choice-boxes",
+                        name: "nature_of_case",
+                        editable: true,
+                        choices: [
+                            { value: "Civil", label: "Civil" },
+                            { value: "Criminal", label: "Criminal" },
+                        ],
+                    }),
                 ]
             ),
             createAdminCaseDetailSection(
@@ -456,6 +487,168 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    const renderCaseImportSummary = (summary, payload, titleText) => {
+        const imported = Number(payload.imported || 0);
+        const skipped = Array.isArray(payload.skipped) ? payload.skipped : [];
+        const errors = Array.isArray(payload.errors) ? payload.errors : [];
+        const detailItems = [
+            ...skipped.map((item) => ({
+                row: item.row,
+                reason: item.reason || `Skipped duplicate case number: ${item.case_number || ""}`,
+            })),
+            ...errors.map((item) => ({
+                row: item.row,
+                reason: item.reason || "Invalid record.",
+            })),
+        ];
+        const detailHtml = detailItems.length
+            ? `<ul class="case-import-detail-list">${detailItems.slice(0, 30).map((item) => {
+                const rowLabel = Number(item.row || 0) > 0 ? `Row ${escapeAdminHtml(item.row)}: ` : "";
+                return `<li>${rowLabel}${escapeAdminHtml(item.reason)}</li>`;
+            }).join("")}</ul>`
+            : "";
+
+        summary.innerHTML = `
+            <h4>${escapeAdminHtml(titleText)}</h4>
+            <dl>
+                <dt>Successfully Imported:</dt>
+                <dd>${escapeAdminHtml(imported)} ${imported === 1 ? "case" : "cases"}</dd>
+                <dt>Skipped:</dt>
+                <dd>${escapeAdminHtml(skipped.length)} ${skipped.length === 1 ? "duplicate record" : "duplicate records"}</dd>
+                <dt>Errors:</dt>
+                <dd>${escapeAdminHtml(errors.length)} ${errors.length === 1 ? "invalid record" : "invalid records"}</dd>
+            </dl>
+            ${detailHtml}
+        `;
+        summary.hidden = false;
+    };
+
+    const initializeCaseImport = () => {
+        const modal = document.querySelector("[data-case-import-modal]");
+        const openButton = document.querySelector("[data-open-case-import]");
+
+        if (!modal || !openButton || modal.dataset.caseImportReady === "true") {
+            return;
+        }
+
+        modal.dataset.caseImportReady = "true";
+        const form = modal.querySelector("[data-case-import-form]");
+        const fileInput = modal.querySelector("[data-case-import-file]");
+        const fileGroup = modal.querySelector("[data-case-import-file-group]");
+        const errorBox = modal.querySelector("[data-case-import-error]");
+        const summary = modal.querySelector("[data-case-import-summary]");
+        const submitButton = modal.querySelector("[data-case-import-submit]");
+        const okButton = modal.querySelector("[data-case-import-ok]");
+        const cancelButton = modal.querySelector("[data-case-import-cancel]");
+        const title = modal.querySelector("[data-case-import-title]");
+        const subtitle = modal.querySelector("[data-case-import-subtitle]");
+
+        const setError = (message) => {
+            errorBox.textContent = message;
+            errorBox.hidden = false;
+        };
+
+        const clearError = () => {
+            errorBox.textContent = "";
+            errorBox.hidden = true;
+        };
+
+        const resetImportModal = () => {
+            form.reset();
+            clearError();
+            summary.hidden = true;
+            summary.innerHTML = "";
+            fileGroup.hidden = false;
+            submitButton.hidden = false;
+            submitButton.disabled = false;
+            submitButton.textContent = "Upload";
+            cancelButton.hidden = false;
+            okButton.hidden = true;
+            modal.dataset.reloadOnClose = "false";
+            title.textContent = "Import Excel";
+            subtitle.textContent = "Select an Excel file containing case records.";
+        };
+
+        const openModal = () => {
+            resetImportModal();
+            modal.hidden = false;
+            document.body.classList.add("admin-modal-open");
+            window.setTimeout(() => fileInput.focus(), 0);
+        };
+
+        const closeModal = () => {
+            const shouldReload = modal.dataset.reloadOnClose === "true";
+            modal.hidden = true;
+            document.body.classList.remove("admin-modal-open");
+
+            if (shouldReload) {
+                window.location.reload();
+            }
+        };
+
+        openButton.addEventListener("click", openModal);
+        modal.querySelectorAll("[data-close-case-import]").forEach((button) => {
+            button.addEventListener("click", closeModal);
+        });
+        okButton.addEventListener("click", closeModal);
+
+        document.addEventListener("keydown", (event) => {
+            if (!modal.hidden && event.key === "Escape") {
+                event.preventDefault();
+                closeModal();
+            }
+        });
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            clearError();
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                setError("Select an Excel file to upload.");
+                fileInput.focus();
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = "Uploading...";
+
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    headers: { Accept: "application/json" },
+                });
+                const payload = await response.json().catch(() => ({
+                    success: false,
+                    message: "Import failed. Please check the uploaded file.",
+                    imported: 0,
+                    skipped: [],
+                    errors: [{ row: 0, reason: "The server returned an invalid response." }],
+                }));
+                const imported = Number(payload.imported || 0);
+                const titleText = imported > 0 ? "Import Completed" : "Import Failed";
+
+                if (!response.ok && (!payload.errors || payload.errors.length === 0)) {
+                    throw new Error(payload.message || "Import failed. Please check the uploaded file.");
+                }
+
+                title.textContent = titleText;
+                subtitle.textContent = payload.message || "Import failed. Please check the uploaded file.";
+                fileGroup.hidden = true;
+                submitButton.hidden = true;
+                cancelButton.hidden = true;
+                okButton.hidden = false;
+                modal.dataset.reloadOnClose = imported > 0 ? "true" : "false";
+                renderCaseImportSummary(summary, payload, titleText);
+                okButton.focus();
+            } catch (error) {
+                setError(error.message || "Import failed. Please check the uploaded file.");
+                submitButton.disabled = false;
+                submitButton.textContent = "Upload";
+            }
+        });
+    };
+
     const initializeAdminCaseFilters = (root = document) => {
         root.querySelectorAll("[data-admin-case-filters]").forEach((form) => {
             if (form.dataset.caseFiltersReady === "true") {
@@ -483,6 +676,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
             form.querySelectorAll("[data-admin-case-filter]").forEach((filter) => {
                 filter.addEventListener("change", () => refreshAdminCaseResults(form));
+            });
+
+            form.querySelectorAll("[data-admin-case-date]").forEach((dateInput) => {
+                dateInput.addEventListener("input", () => {
+                    const dateField = form.querySelector("[name='date_filter']");
+
+                    if (dateInput.value.trim() !== "" && dateField && dateField.value === "") {
+                        dateField.value = "date_filed";
+                    }
+
+                    window.clearTimeout(searchTimer);
+                    searchTimer = window.setTimeout(() => refreshAdminCaseResults(form), 180);
+                });
             });
 
             form.addEventListener("submit", (event) => {
@@ -553,10 +759,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const updateCaseFilterCards = (status) => {
         const form = document.querySelector("[data-admin-case-filters]");
         const hasSearchFilter = Array.from(form?.querySelectorAll("[data-admin-case-search]") || []).some((input) => input.value.trim() !== "");
+        const hasDateFilter = Boolean(form?.querySelector("[name='date_filter']")?.value.trim() || form?.querySelector("[name='date_value']")?.value.trim());
 
         document.querySelectorAll("[data-case-filter-card]").forEach((card) => {
             const cardStatus = card.dataset.caseFilterStatus || "";
-            const isUnfilteredTotal = cardStatus === "" && status === "" && !hasSearchFilter;
+            const isUnfilteredTotal = cardStatus === "" && status === "" && !hasSearchFilter && !hasDateFilter;
 
             card.classList.toggle("is-active", isUnfilteredTotal || (cardStatus !== "" && cardStatus === status));
         });
@@ -605,6 +812,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 initializeAdminCaseFilters(casesPanel);
                 initializeAdminCaseRows(casesPanel);
                 initializeAdminCasePagination(casesPanel);
+                initializeCaseImport();
                 casesPanel.dataset.caseListUrl = `${nextUrl.pathname}${nextUrl.search}`;
                 window.history.pushState({}, "", `${nextUrl.pathname}${nextUrl.search}#caseSearch`);
                 scrollToCaseSearch();
@@ -618,6 +826,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initializeAdminCaseFilters();
     initializeAdminCasePagination();
+    initializeCaseImport();
 
     const dashboardCaseRows = document.querySelectorAll("[data-dashboard-case-row]");
     const dashboardViewButton = document.querySelector("[data-dashboard-view-selected]");

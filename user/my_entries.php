@@ -102,6 +102,7 @@ function entry_status_class(string $status): string
                                     <th>Case Number</th>
                                     <th>Case Title</th>
                                     <th>Complainant Title</th>
+                                    <th>Nature</th>
                                     <th>Case Status</th>
                                     <th>Date Filed</th>
                                 </tr>
@@ -109,7 +110,7 @@ function entry_status_class(string $status): string
                             <tbody>
                                 <?php if ($cases === []): ?>
                                     <tr>
-                                        <td class="entries-empty" colspan="5">
+                                        <td class="entries-empty" colspan="6">
                                             <?php echo $search === '' ? 'No case records found.' : 'No case records found for your search.'; ?>
                                         </td>
                                     </tr>
@@ -119,6 +120,7 @@ function entry_status_class(string $status): string
                                             <td><a href="#" data-case-detail-link><?php echo htmlspecialchars((string) $case['case_number']); ?></a></td>
                                             <td><?php echo htmlspecialchars((string) $case['case_title']); ?></td>
                                             <td><?php echo htmlspecialchars((string) $case['complainant_title']); ?></td>
+                                            <td><?php echo htmlspecialchars((string) ($case['nature_of_case'] ?? '')); ?></td>
                                             <td><span class="status-pill <?php echo entry_status_class((string) $case['case_status']); ?>"><?php echo htmlspecialchars((string) $case['case_status']); ?></span></td>
                                             <td><?php echo htmlspecialchars(entry_date_label($case['date_filed'] ?? null)); ?></td>
                                         </tr>

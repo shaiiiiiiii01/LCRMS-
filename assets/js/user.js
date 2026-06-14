@@ -363,14 +363,38 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    const isRadioGroupField = (field) => typeof RadioNodeList !== "undefined" && field instanceof RadioNodeList;
+
+    const getCaseFieldValue = (field) => {
+        if (!field) {
+            return "";
+        }
+
+        return isRadioGroupField(field) ? field.value : String(field.value || "");
+    };
+
+    const getChoiceBoxGroup = (field) => {
+        const firstField = isRadioGroupField(field) ? Array.from(field)[0] : field;
+        return firstField ? firstField.closest("[data-choice-boxes]") : null;
+    };
+
     const clearCaseFieldErrors = (form) => {
         form.querySelectorAll(".is-invalid").forEach((field) => {
             field.classList.remove("is-invalid");
+        });
+
+        form.querySelectorAll("[aria-invalid='true']").forEach((field) => {
             field.removeAttribute("aria-invalid");
         });
     };
 
     const setCaseFieldError = (field) => {
+        if (isRadioGroupField(field)) {
+            Array.from(field).forEach((input) => input.setAttribute("aria-invalid", "true"));
+            getChoiceBoxGroup(field)?.classList.add("is-invalid");
+            return;
+        }
+
         field.classList.add("is-invalid");
         field.setAttribute("aria-invalid", "true");
     };
@@ -383,7 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
         requiredCaseFields.forEach((name) => {
             const field = form.elements[name];
 
-            if (!field || String(field.value || "").trim() !== "") {
+            if (!field || getCaseFieldValue(field).trim() !== "") {
                 return;
             }
 
@@ -415,14 +439,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            field.addEventListener("input", () => {
-                if (String(field.value || "").trim() === "") {
+            const clearFieldError = () => {
+                if (getCaseFieldValue(field).trim() === "") {
+                    return;
+                }
+
+                if (isRadioGroupField(field)) {
+                    Array.from(field).forEach((input) => input.removeAttribute("aria-invalid"));
+                    getChoiceBoxGroup(field)?.classList.remove("is-invalid");
                     return;
                 }
 
                 field.classList.remove("is-invalid");
                 field.removeAttribute("aria-invalid");
-            });
+            };
+
+            if (isRadioGroupField(field)) {
+                Array.from(field).forEach((input) => input.addEventListener("change", clearFieldError));
+                return;
+            }
+
+            field.addEventListener("input", clearFieldError);
         });
 
         form.addEventListener("reset", () => {

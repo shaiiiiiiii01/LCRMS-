@@ -6,10 +6,10 @@ function admin_is_logged_in(): bool
     return lcrms_account_is_admin();
 }
 
-function require_admin_login(string $loginPath = 'login.php'): void
+function require_admin_login(string $loginPath = '../login.php'): void
 {
     // Protected admin pages call this before rendering. If no valid session is
-    // found, the visitor is sent to admin login instead of seeing page content.
+    // found, the visitor is sent to the shared login page instead of seeing page content.
     $account = lcrms_current_account();
 
     if (!$account) {

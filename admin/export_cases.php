@@ -9,7 +9,9 @@ require_once __DIR__ . '/case_helpers.php';
 $caseModel = new CaseModel(lcrms_db());
 $search = trim((string) ($_GET['search'] ?? ''));
 $status = trim((string) ($_GET['status'] ?? ''));
-$cases = $caseModel->exportForAdmin($search, $status);
+$dateFilter = trim((string) ($_GET['date_filter'] ?? ''));
+$dateValue = trim((string) ($_GET['date_value'] ?? ''));
+$cases = $caseModel->exportForAdmin($search, $status, $dateFilter, $dateValue);
 
 function xlsx_xml(string $value): string
 {

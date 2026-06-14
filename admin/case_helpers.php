@@ -73,7 +73,7 @@ function admin_case_badge_class(string $status): string
     return 'badge-c';
 }
 
-function admin_case_page_url(int $page, string $search, string $status): string
+function admin_case_page_url(int $page, string $search, string $status, string $dateFilter = '', string $dateValue = ''): string
 {
     $query = ['page' => max(1, $page)];
 
@@ -83,6 +83,14 @@ function admin_case_page_url(int $page, string $search, string $status): string
 
     if ($status !== '') {
         $query['status'] = $status;
+    }
+
+    if ($dateFilter !== '') {
+        $query['date_filter'] = $dateFilter;
+    }
+
+    if ($dateValue !== '') {
+        $query['date_value'] = $dateValue;
     }
 
     return '?' . http_build_query($query);

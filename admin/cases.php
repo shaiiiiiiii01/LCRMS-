@@ -14,17 +14,19 @@ $assetBase = '../';
 $caseModel = new CaseModel(lcrms_db());
 $caseSearch = trim((string) ($_GET['search'] ?? ''));
 $caseStatus = trim((string) ($_GET['status'] ?? ''));
+$caseDateFilter = trim((string) ($_GET['date_filter'] ?? ''));
+$caseDateValue = trim((string) ($_GET['date_value'] ?? ''));
 $casePage = max(1, (int) ($_GET['page'] ?? 1));
 $casePerPage = 20;
 $caseCounts = $caseModel->adminCounts();
-$caseTotal = $caseModel->countForAdmin($caseSearch, $caseStatus);
+$caseTotal = $caseModel->countForAdmin($caseSearch, $caseStatus, $caseDateFilter, $caseDateValue);
 $caseTotalPages = max(1, (int) ceil($caseTotal / $casePerPage));
 
 if ($casePage > $caseTotalPages) {
     $casePage = $caseTotalPages;
 }
 
-$cases = $caseModel->listForAdmin($caseSearch, $caseStatus, $casePage, $casePerPage);
+$cases = $caseModel->listForAdmin($caseSearch, $caseStatus, $casePage, $casePerPage, $caseDateFilter, $caseDateValue);
 $caseStart = $caseTotal === 0 ? 0 : (($casePage - 1) * $casePerPage) + 1;
 $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
 ?>
@@ -141,10 +143,31 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
                             </select>
                         </div>
 
-                        <button class="export-button" type="submit" formaction="export_cases.php" formmethod="get">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5M12 15V3"></path></svg>
-                            Export
-                        </button>
+                        <div class="filter-row date-filter-row">
+                            <span>
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
+                                Date:
+                            </span>
+                            <select name="date_filter" aria-label="Date field filter" data-admin-case-filter>
+                                <option value="">Select Date</option>
+                                <option value="date_filed"<?php echo admin_case_selected($caseDateFilter, 'date_filed'); ?>>Date Filed</option>
+                                <option value="date_initial_confrontation"<?php echo admin_case_selected($caseDateFilter, 'date_initial_confrontation'); ?>>Initial Confrontation</option>
+                                <option value="date_settlement_award"<?php echo admin_case_selected($caseDateFilter, 'date_settlement_award'); ?>>Settlement / Award</option>
+                                <option value="date_execution"<?php echo admin_case_selected($caseDateFilter, 'date_execution'); ?>>Execution</option>
+                            </select>
+                            <input type="date" name="date_value" value="<?php echo htmlspecialchars($caseDateValue); ?>" aria-label="Date value in MM/DD/YYYY format" title="MM/DD/YYYY" data-admin-case-date>
+                        </div>
+
+                        <div class="cases-toolbar-actions">
+                            <button class="export-button" type="submit" formaction="export_cases.php" formmethod="get">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5M12 15V3"></path></svg>
+                                Export
+                            </button>
+                            <button class="import-button" type="button" data-open-case-import>
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M17 8l-5-5-5 5M12 3v12"></path></svg>
+                                Import
+                            </button>
+                        </div>
                     </form>
 
                     <div class="admin-table-wrap" data-admin-cases data-case-api="cases_api.php">
@@ -154,6 +177,7 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
                                     <th>Case Number</th>
                                     <th>Case Title</th>
                                     <th>Complainant Title</th>
+                                    <th>Nature</th>
                                     <th>Status</th>
                                     <th>Date Filed</th>
                                     <th>Encoder</th>
@@ -162,7 +186,7 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
                             <tbody>
                                 <?php if ($cases === []): ?>
                                     <tr>
-                                        <td colspan="6">No case records found.</td>
+                                        <td colspan="7">No case records found.</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($cases as $case): ?>
@@ -170,6 +194,7 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
                                             <td><?php echo htmlspecialchars((string) $case['case_number']); ?></td>
                                             <td><?php echo htmlspecialchars((string) $case['case_title']); ?></td>
                                             <td><?php echo htmlspecialchars((string) $case['complainant_title']); ?></td>
+                                            <td><?php echo htmlspecialchars((string) ($case['nature_of_case'] ?? '')); ?></td>
                                             <td><span class="case-badge <?php echo admin_case_badge_class((string) $case['case_status']); ?>"><?php echo htmlspecialchars(admin_case_status_label((string) $case['case_status'])); ?></span></td>
                                             <td><?php echo htmlspecialchars(admin_case_date_label($case['date_filed'] ?? null)); ?></td>
                                             <td><?php echo htmlspecialchars((string) $case['created_by']); ?></td>
@@ -182,17 +207,19 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
 
                     <div class="cases-pagination">
                         <div class="pagination-buttons">
-                            <button type="button" aria-label="Previous page" <?php echo $casePage <= 1 ? 'disabled' : 'data-case-page-url="' . htmlspecialchars(admin_case_page_url($casePage - 1, $caseSearch, $caseStatus), ENT_QUOTES) . '" onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($casePage - 1, $caseSearch, $caseStatus), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
+                            <button type="button" aria-label="Previous page" <?php echo $casePage <= 1 ? 'disabled' : 'data-case-page-url="' . htmlspecialchars(admin_case_page_url($casePage - 1, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES) . '" onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($casePage - 1, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
                             <?php foreach (admin_case_pagination_pages($casePage, $caseTotalPages) as $page): ?>
                                 <?php if (is_string($page)): ?>
                                     <span>...</span>
                                 <?php else: ?>
-                                    <button class="<?php echo $page === $casePage ? 'is-active' : ''; ?>" type="button" data-case-page-url="<?php echo htmlspecialchars(admin_case_page_url((int) $page, $caseSearch, $caseStatus), ENT_QUOTES); ?>" onclick="window.location.href='<?php echo htmlspecialchars(admin_case_page_url((int) $page, $caseSearch, $caseStatus), ENT_QUOTES); ?>'"><?php echo $page; ?></button>
+                                    <button class="<?php echo $page === $casePage ? 'is-active' : ''; ?>" type="button" data-case-page-url="<?php echo htmlspecialchars(admin_case_page_url((int) $page, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES); ?>" onclick="window.location.href='<?php echo htmlspecialchars(admin_case_page_url((int) $page, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES); ?>'"><?php echo $page; ?></button>
                                 <?php endif; ?>
                             <?php endforeach; ?>
-                            <button type="button" aria-label="Next page" <?php echo $casePage >= $caseTotalPages ? 'disabled' : 'data-case-page-url="' . htmlspecialchars(admin_case_page_url($casePage + 1, $caseSearch, $caseStatus), ENT_QUOTES) . '" onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($casePage + 1, $caseSearch, $caseStatus), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
+                            <button type="button" aria-label="Next page" <?php echo $casePage >= $caseTotalPages ? 'disabled' : 'data-case-page-url="' . htmlspecialchars(admin_case_page_url($casePage + 1, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES) . '" onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($casePage + 1, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
                         </div>
                     </div>
+
+                    <?php include __DIR__ . '/case_import_modal.php'; ?>
                 </section>
 
                 <section class="admin-lower-actions">

@@ -6,10 +6,10 @@ function user_is_logged_in(): bool
     return lcrms_account_is_user();
 }
 
-function require_user_login(string $loginPath = 'login.php'): void
+function require_user_login(string $loginPath = '../login.php'): void
 {
     // Protected user pages call this before rendering. Missing or expired
-    // sessions are redirected to the User Login page.
+    // sessions are redirected to the shared login page.
     $account = lcrms_current_account();
 
     if (!$account) {
