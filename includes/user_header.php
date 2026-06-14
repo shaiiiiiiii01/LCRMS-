@@ -47,3 +47,4 @@ $userRole = $userRole ?? ($_SESSION['role'] ?? (isset($_SESSION['account_role'])
         </div>
     </div>
 </header>
+

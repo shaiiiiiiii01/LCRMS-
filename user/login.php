@@ -125,3 +125,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="../assets/js/user.js"></script>
 </body>
 </html>
+

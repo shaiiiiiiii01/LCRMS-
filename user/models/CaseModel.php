@@ -1193,3 +1193,4 @@ class CaseModel
         mysqli_stmt_bind_param($stmt, $types, ...$refs);
     }
 }
+

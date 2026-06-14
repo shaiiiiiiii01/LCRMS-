@@ -8,3 +8,4 @@ $footerYear = $footerYear ?? '2026';
         <span>System Status: <span class="system-status-online">Online</span></span>
     </div>
 </footer>
+

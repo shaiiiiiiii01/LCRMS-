@@ -162,3 +162,4 @@ function dashboard_entry_status_class(string $status): string
     <script src="../assets/js/user.js"></script>
 </body>
 </html>
+

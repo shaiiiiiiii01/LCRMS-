@@ -220,3 +220,4 @@ if ($caseStatus !== '' && !in_array($caseStatus, $statusOptions, true)) {
     <script src="../assets/js/user.js"></script>
 </body>
 </html>
+
