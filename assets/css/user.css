@@ -1540,6 +1540,24 @@ body.sidebar-collapsed .user-sidebar {
     box-shadow: 0 0 0 3px rgba(255, 79, 95, 0.1);
 }
 
+.date-field.is-invalid {
+    border-color: #ff4f5f;
+    background: #fffafa;
+    box-shadow: 0 0 0 3px rgba(255, 79, 95, 0.1);
+}
+
+.case-field-message {
+    margin: 0;
+    color: #b42318;
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+.case-field-message[hidden] {
+    display: none;
+}
+
 .case-choice-boxes {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

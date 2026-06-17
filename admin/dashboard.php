@@ -79,7 +79,7 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
 
                     <article class="admin-stat-card dashboard-stat-card accent-red">
                         <div class="dashboard-stat-copy">
-                            <span class="dashboard-stat-title">Call for Action (CFA)</span>
+                            <span class="dashboard-stat-title">Certificate to File Action (CFA)</span>
                             <strong><?php echo number_format($caseCounts['cfa'] ?? 0); ?></strong>
                             <p>Cases requiring action</p>
                         </div>
@@ -92,7 +92,7 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
                         <div class="dashboard-stat-copy">
                             <span class="dashboard-stat-title">Resolved</span>
                             <strong><?php echo number_format($caseCounts['resolved'] ?? 0); ?></strong>
-                            <p>Settled, mediation, and conciliation cases</p>
+                            <p>Resolved case records</p>
                         </div>
                         <div class="dashboard-stat-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 12.5l2.6 2.6L16 9"></path></svg>
@@ -155,7 +155,6 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
                                 <option value="cfa"<?php echo admin_case_selected($dashboardStatus, 'cfa'); ?>>CFA</option>
                                 <option value="m"<?php echo admin_case_selected($dashboardStatus, 'm'); ?>>M</option>
                                 <option value="c"<?php echo admin_case_selected($dashboardStatus, 'c'); ?>>C</option>
-                                <option value="settled"<?php echo admin_case_selected($dashboardStatus, 'settled'); ?>>Settled</option>
                                 <option value="endorsed"<?php echo admin_case_selected($dashboardStatus, 'endorsed'); ?>>Endorsed</option>
                                 <option value="dismissed"<?php echo admin_case_selected($dashboardStatus, 'dismissed'); ?>>Dismissed</option>
                             </select>

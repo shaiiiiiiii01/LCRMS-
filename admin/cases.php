@@ -72,7 +72,7 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
 
                     <a class="admin-stat-card dashboard-stat-card cases-filter-card accent-red<?php echo $caseStatus === 'cfa' ? ' is-active' : ''; ?>" href="cases.php?status=cfa#caseSearch" data-case-filter-card data-case-filter-status="cfa">
                         <div class="dashboard-stat-copy">
-                            <span class="dashboard-stat-title">Call for Action (CFA)</span>
+                            <span class="dashboard-stat-title">Certificate to File Action (CFA)</span>
                             <strong><?php echo number_format($caseCounts['cfa'] ?? 0); ?></strong>
                             <p>Cases requiring action</p>
                         </div>
@@ -85,7 +85,7 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
                         <div class="dashboard-stat-copy">
                             <span class="dashboard-stat-title">Resolved</span>
                             <strong><?php echo number_format($caseCounts['resolved'] ?? 0); ?></strong>
-                            <p>Settled, mediation, and conciliation cases</p>
+                            <p>Resolved case records</p>
                         </div>
                         <div class="dashboard-stat-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 12.5l2.6 2.6L16 9"></path></svg>
@@ -137,7 +137,6 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
                                 <option value="resolved"<?php echo admin_case_selected($caseStatus, 'resolved'); ?>>Resolved</option>
                                 <option value="m"<?php echo admin_case_selected($caseStatus, 'm'); ?>>M</option>
                                 <option value="c"<?php echo admin_case_selected($caseStatus, 'c'); ?>>C</option>
-                                <option value="settled"<?php echo admin_case_selected($caseStatus, 'settled'); ?>>Settled</option>
                                 <option value="endorsed"<?php echo admin_case_selected($caseStatus, 'endorsed'); ?>>Endorsed</option>
                                 <option value="dismissed"<?php echo admin_case_selected($caseStatus, 'dismissed'); ?>>Dismissed</option>
                             </select>

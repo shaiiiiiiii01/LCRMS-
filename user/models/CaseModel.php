@@ -3,9 +3,14 @@ declare(strict_types=1);
 
 class CaseModel
 {
-    private const STATUS_CFA = 'CFA (Call for Action)';
-    private const STATUS_SETTLED = 'Settled';
+    private const STATUS_MEDIATION = 'Mediation';
+    private const STATUS_CONCILIATION = 'Conciliation';
+    private const STATUS_CFA = 'CFA (Certificate to File Action)';
     private const NATURE_OPTIONS = ['Civil', 'Criminal'];
+    private const DISMISSAL_REASONS = [
+        'Complainant withdrew/dropped the case (inurong ang kaso)',
+        'Respondent failed to appear (di dumating ang respondent)',
+    ];
 
     public function __construct(private mysqli $conn)
     {
@@ -51,32 +56,16 @@ class CaseModel
         $dateFiled = $this->parseRequiredDate($dateFiledInput, 'Date Filed', $errors);
         $initialConfrontation = $this->parseOptionalDate((string) ($payload['date_initial_confrontation'] ?? ''), 'Date of Initial Confrontation', $errors);
         $settlementAward = $this->parseOptionalDate((string) ($payload['date_settlement_award'] ?? ''), 'Date of Settlement / Award', $errors);
-        $executionDate = null;
+        $executionDate = $this->parseOptionalDate((string) ($payload['date_execution'] ?? ''), 'Date of Execution', $errors);
+        $submittedStatus = $this->normalizeStatus((string) ($payload['case_status'] ?? $payload['status'] ?? ''));
+        $caseStatus = self::STATUS_MEDIATION;
 
-        if ($settlementAward !== null) {
-            $executionDate = $this->parseOptionalDate((string) ($payload['date_execution'] ?? ''), 'Date of Execution', $errors);
+        if ($submittedStatus !== '' && $submittedStatus !== self::STATUS_MEDIATION) {
+            $errors[] = 'New cases must start with Mediation.';
         }
 
-        $statusResult = $this->determineStatus(
-            (string) ($payload['case_status'] ?? $payload['status'] ?? ''),
-            $initialConfrontation,
-            $settlementAward,
-            $agreement,
-            $this->isAuthorizedForRestrictedStatus($account)
-        );
-
-        if (!empty($statusResult['error'])) {
-            $errors[] = $statusResult['error'];
-        }
-
-        $caseStatus = (string) ($statusResult['status'] ?? self::STATUS_CFA);
-
-        if ($caseStatus === self::STATUS_CFA) {
-            $settlementAward = null;
-            $executionDate = null;
-        } elseif ($settlementAward === null) {
-            $executionDate = null;
-        }
+        $this->validateDateDependencies($dateFiled, $initialConfrontation, $settlementAward, $executionDate, $errors);
+        $this->validateOutcomeRules($caseStatus, $settlementAward, $executionDate, $agreement, $errors);
 
         if ($errors !== []) {
             return [
@@ -496,10 +485,10 @@ class CaseModel
             "SELECT
                 COUNT(*) AS total,
                 SUM(CASE WHEN DATE(date_created) = CURDATE() THEN 1 ELSE 0 END) AS new_today,
-                SUM(CASE WHEN LOWER(case_status) IN ('cfa', 'cfa (call for action)', 'm', 'mediation', 'c', 'conciliation', 'for conciliation stage') THEN 1 ELSE 0 END) AS pending,
-                SUM(CASE WHEN LOWER(case_status) NOT IN ('settled', 'dismissed', 'endorsed') THEN 1 ELSE 0 END) AS ongoing,
-                SUM(CASE WHEN LOWER(case_status) IN ('cfa', 'cfa (call for action)') THEN 1 ELSE 0 END) AS cfa,
-                SUM(CASE WHEN LOWER(case_status) IN ('settled', 'm', 'mediation', 'c', 'conciliation') THEN 1 ELSE 0 END) AS resolved,
+                SUM(CASE WHEN LOWER(case_status) IN ('m', 'mediation', 'c', 'conciliation', 'for conciliation stage') THEN 1 ELSE 0 END) AS pending,
+                SUM(CASE WHEN LOWER(case_status) NOT IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)') THEN 1 ELSE 0 END) AS ongoing,
+                SUM(CASE WHEN LOWER(case_status) IN ('cfa', 'cfa (call for action)', 'cfa (certificate to file action)') THEN 1 ELSE 0 END) AS cfa,
+                SUM(CASE WHEN LOWER(case_status) IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)') THEN 1 ELSE 0 END) AS resolved,
                 SUM(CASE WHEN LOWER(case_status) = 'endorsed' THEN 1 ELSE 0 END) AS endorsed,
                 SUM(CASE WHEN LOWER(case_status) = 'dismissed' THEN 1 ELSE 0 END) AS dismissed
             FROM cases"
@@ -574,7 +563,9 @@ class CaseModel
             ];
         }
 
-        if (!$this->findByIdForAdmin($id)) {
+        $existingCase = $this->findByIdForAdmin($id);
+
+        if (!$existingCase) {
             return [
                 'success' => false,
                 'message' => 'Case record not found.',
@@ -582,13 +573,15 @@ class CaseModel
             ];
         }
 
-        $caseTitle = trim((string) ($payload['case_title'] ?? ''));
-        $complainantTitle = trim((string) ($payload['complainant_title'] ?? ''));
-        $natureOfCase = $this->normalizeNatureOfCase((string) ($payload['nature_of_case'] ?? ''));
-        $dateFiledInput = trim((string) ($payload['date_filed'] ?? ''));
-        $details = trim((string) ($payload['detailed_case_description'] ?? ''));
+        $caseTitle = trim((string) ($existingCase['case_title'] ?? ''));
+        $complainantTitle = trim((string) ($existingCase['complainant_title'] ?? ''));
+        $natureOfCase = $this->normalizeNatureOfCase((string) ($existingCase['nature_of_case'] ?? ''));
+        $dateFiledInput = trim((string) ($existingCase['date_filed'] ?? ''));
+        $initialConfrontationInput = trim((string) ($existingCase['date_initial_confrontation'] ?? ''));
+        $details = trim((string) ($existingCase['detailed_case_description'] ?? ''));
         $agreement = trim((string) ($payload['main_point_of_agreement'] ?? ''));
         $caseStatus = $this->normalizeStatus((string) ($payload['case_status'] ?? ''));
+        $currentStatus = $this->normalizeStatus((string) ($existingCase['case_status'] ?? ''));
         $errors = [];
 
         if ($caseTitle === '') {
@@ -613,24 +606,17 @@ class CaseModel
             $errors[] = 'Detailed Case Description is required.';
         }
 
-        $allowedStatuses = [
-            'For Conciliation Stage',
-            'Mediation',
-            'Conciliation',
-            self::STATUS_CFA,
-            self::STATUS_SETTLED,
-            'Endorsed',
-            'Dismissed',
-        ];
-
-        if (!in_array($caseStatus, $allowedStatuses, true)) {
+        if (!in_array($caseStatus, $this->workflowStatuses(), true)) {
             $errors[] = 'Select a valid case status.';
         }
 
         $dateFiled = $this->parseRequiredDate($dateFiledInput, 'Date Filed', $errors);
-        $initialConfrontation = $this->parseOptionalDate((string) ($payload['date_initial_confrontation'] ?? ''), 'Date of Initial Confrontation', $errors);
+        $initialConfrontation = $this->parseOptionalDate($initialConfrontationInput, 'Date of Initial Confrontation', $errors);
         $settlementAward = $this->parseOptionalDate((string) ($payload['date_settlement_award'] ?? ''), 'Date of Settlement / Award', $errors);
         $executionDate = $this->parseOptionalDate((string) ($payload['date_execution'] ?? ''), 'Date of Execution', $errors);
+        $this->validateStatusTransition($currentStatus, $caseStatus, $errors);
+        $this->validateDateDependencies($dateFiled, $initialConfrontation, $settlementAward, $executionDate, $errors);
+        $this->validateOutcomeRules($caseStatus, $settlementAward, $executionDate, $agreement, $errors);
 
         if ($errors !== []) {
             return [
@@ -640,6 +626,8 @@ class CaseModel
                 'status' => 422,
             ];
         }
+
+        mysqli_begin_transaction($this->conn);
 
         $stmt = mysqli_prepare(
             $this->conn,
@@ -659,6 +647,8 @@ class CaseModel
         );
 
         if (!$stmt) {
+            mysqli_rollback($this->conn);
+
             return [
                 'success' => false,
                 'message' => 'Case record could not be prepared for update.',
@@ -685,6 +675,7 @@ class CaseModel
         if (!mysqli_stmt_execute($stmt)) {
             $message = mysqli_stmt_error($stmt) ?: 'Case record could not be updated.';
             mysqli_stmt_close($stmt);
+            mysqli_rollback($this->conn);
 
             return [
                 'success' => false,
@@ -694,6 +685,26 @@ class CaseModel
         }
 
         mysqli_stmt_close($stmt);
+
+        try {
+            $this->logActivity(
+                (string) ($existingCase['case_number'] ?? ''),
+                $caseTitle,
+                $this->currentFullname($account),
+                date('Y-m-d H:i:s'),
+                'Case Updated',
+                'CASE_UPDATED'
+            );
+            mysqli_commit($this->conn);
+        } catch (Throwable $exception) {
+            mysqli_rollback($this->conn);
+
+            return [
+                'success' => false,
+                'message' => $exception->getMessage(),
+                'status' => 500,
+            ];
+        }
 
         return [
             'success' => true,
@@ -759,24 +770,20 @@ class CaseModel
                     $rowErrors[] = 'Detailed Case Description is required.';
                 }
 
-                $allowedStatuses = [
-                    'For Conciliation Stage',
-                    'Mediation',
-                    'Conciliation',
-                    self::STATUS_CFA,
-                    self::STATUS_SETTLED,
-                    'Endorsed',
-                    'Dismissed',
-                ];
-
-                if ($caseStatus !== '' && !in_array($caseStatus, $allowedStatuses, true)) {
+                if ($caseStatus !== '' && !in_array($caseStatus, $this->workflowStatuses(), true)) {
                     $rowErrors[] = 'Case Status has an invalid value.';
+                }
+
+                if ($caseStatus !== '' && $caseStatus !== self::STATUS_MEDIATION) {
+                    $rowErrors[] = 'New cases must start with Mediation.';
                 }
 
                 $dateFiled = $this->parseImportDate($dateFiledInput, 'Date Filed', $rowErrors);
                 $initialConfrontation = $this->parseImportDate((string) ($row['date_initial_confrontation'] ?? ''), 'Date of Initial Confrontation', $rowErrors);
                 $settlementAward = $this->parseImportDate((string) ($row['date_settlement_award'] ?? ''), 'Date of Settlement / Award', $rowErrors);
                 $executionDate = $this->parseImportDate((string) ($row['date_execution'] ?? ''), 'Date of Execution', $rowErrors);
+                $this->validateDateDependencies($dateFiled, $initialConfrontation, $settlementAward, $executionDate, $rowErrors);
+                $this->validateOutcomeRules($caseStatus, $settlementAward, $executionDate, $agreement, $rowErrors);
 
                 if ($caseNumber !== '') {
                     $caseNumberKey = strtoupper($caseNumber);
@@ -963,8 +970,8 @@ class CaseModel
             "SELECT
                 COUNT(*) AS total,
                 SUM(CASE WHEN DATE(date_created) = CURDATE() THEN 1 ELSE 0 END) AS new_today,
-                SUM(CASE WHEN case_status NOT IN ('Settled', 'Dismissed', 'Endorsed') THEN 1 ELSE 0 END) AS ongoing,
-                SUM(CASE WHEN case_status IN ('Settled', 'Dismissed', 'Endorsed') THEN 1 ELSE 0 END) AS resolved
+                SUM(CASE WHEN LOWER(case_status) NOT IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)') THEN 1 ELSE 0 END) AS ongoing,
+                SUM(CASE WHEN LOWER(case_status) IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)') THEN 1 ELSE 0 END) AS resolved
             FROM cases"
         );
 
@@ -986,42 +993,163 @@ class CaseModel
         return $counts;
     }
 
-    private function determineStatus(string $submittedStatus, ?string $initialConfrontation, ?string $settlementAward, string $agreement, bool $canUseRestrictedStatus): array
+    private function workflowStatuses(): array
     {
-        if ($initialConfrontation === null || trim($agreement) === '') {
-            return ['status' => self::STATUS_CFA];
-        }
-
-        if ($settlementAward !== null) {
-            return ['status' => self::STATUS_SETTLED];
-        }
-
-        $normalizedStatus = $this->normalizeStatus($submittedStatus);
-        $restrictedStatuses = ['Endorsed', 'Dismissed'];
-
-        if (in_array($normalizedStatus, $restrictedStatuses, true) && !$canUseRestrictedStatus) {
-            return [
-                'status' => self::STATUS_CFA,
-                'error' => 'Endorsed and Dismissed statuses may only be assigned by authorized users.',
-            ];
-        }
-
-        if (in_array($normalizedStatus, $restrictedStatuses, true)) {
-            return ['status' => $normalizedStatus];
-        }
-
-        $allowedStatuses = [
-            'For Conciliation Stage',
-            'Mediation',
-            'Conciliation',
-            self::STATUS_CFA,
-        ];
-
         return [
-            'status' => in_array($normalizedStatus, $allowedStatuses, true)
-                ? $normalizedStatus
-                : 'For Conciliation Stage',
+            self::STATUS_MEDIATION,
+            self::STATUS_CONCILIATION,
+            self::STATUS_CFA,
+            'Endorsed',
+            'Dismissed',
         ];
+    }
+
+    private function finalWorkflowStatuses(): array
+    {
+        return [
+            self::STATUS_CFA,
+            'Endorsed',
+            'Dismissed',
+        ];
+    }
+
+    private function validateStatusTransition(string $currentStatus, string $nextStatus, array &$errors): void
+    {
+        if ($nextStatus === '' || !in_array($nextStatus, $this->workflowStatuses(), true)) {
+            return;
+        }
+
+        if ($currentStatus === '') {
+            $errors[] = 'Current case status is required before updating the workflow.';
+            return;
+        }
+
+        if ($currentStatus === $nextStatus) {
+            return;
+        }
+
+        if ($currentStatus === self::STATUS_MEDIATION && $nextStatus === self::STATUS_CONCILIATION) {
+            return;
+        }
+
+        if ($currentStatus === self::STATUS_CONCILIATION && in_array($nextStatus, $this->finalWorkflowStatuses(), true)) {
+            return;
+        }
+
+        if (in_array($currentStatus, $this->finalWorkflowStatuses(), true)) {
+            $errors[] = 'Final outcome cases cannot move to another case status.';
+            return;
+        }
+
+        if ($currentStatus === self::STATUS_MEDIATION) {
+            $errors[] = 'Cases in Mediation can only move to Conciliation.';
+            return;
+        }
+
+        if ($currentStatus === self::STATUS_CONCILIATION) {
+            $errors[] = 'Cases in Conciliation can only move to Dismissed, CFA, or Endorsed.';
+            return;
+        }
+
+        $errors[] = 'Case status cannot be changed through that workflow step.';
+    }
+
+    private function validateDateDependencies(?string $dateFiled, ?string $initialConfrontation, ?string $settlementAward, ?string $executionDate, array &$errors): void
+    {
+        if ($dateFiled === null) {
+            if ($initialConfrontation !== null || $settlementAward !== null || $executionDate !== null) {
+                $errors[] = 'Date Filed is required before other dates can be entered.';
+            }
+
+            return;
+        }
+
+        if ($initialConfrontation === null && ($settlementAward !== null || $executionDate !== null)) {
+            $errors[] = 'Date of Initial Confrontation is required before settlement or execution dates can be entered.';
+        }
+
+        if ($settlementAward !== null && $initialConfrontation === null) {
+            $errors[] = 'Date of Settlement / Award can only be entered after Date Filed and Date of Initial Confrontation are set.';
+        }
+
+        if ($executionDate !== null && ($initialConfrontation === null || $settlementAward === null)) {
+            $errors[] = 'Date of Execution can only be entered after Date Filed, Date of Initial Confrontation, and Date of Settlement / Award are set.';
+        }
+    }
+
+    private function validateOutcomeRules(string $caseStatus, ?string $settlementAward, ?string $executionDate, string $agreement, array &$errors): void
+    {
+        $agreement = trim($agreement);
+
+        if ($settlementAward !== null && $agreement === '') {
+            $errors[] = 'Main Point of Agreement is required for settled cases.';
+        }
+
+        if ($caseStatus === 'Endorsed') {
+            if ($settlementAward !== null || $executionDate !== null) {
+                $errors[] = 'Endorsed cases must not have Date of Settlement / Award or Date of Execution.';
+            }
+
+            if ($agreement === '') {
+                $errors[] = 'Main Point of Agreement is required for endorsed cases.';
+            } elseif (!$this->endorsedAgreementIsValid($agreement)) {
+                $errors[] = 'Main Point of Agreement for endorsed cases must explain that the case is being passed to the higher district and needs further action.';
+            }
+        }
+
+        if ($caseStatus === 'Dismissed') {
+            if ($settlementAward !== null || $executionDate !== null) {
+                $errors[] = 'Dismissed cases must not have Date of Settlement / Award or Date of Execution.';
+            }
+
+            if ($agreement === '') {
+                $errors[] = 'Dismissal reason is required.';
+            } elseif (!$this->dismissalReasonIsValid($agreement)) {
+                $errors[] = 'Dismissal reason must be one of: ' . implode('; ', self::DISMISSAL_REASONS) . '.';
+            }
+        }
+
+        if ($caseStatus === self::STATUS_CFA) {
+            if ($settlementAward !== null || $executionDate !== null) {
+                $errors[] = 'CFA cases must not have Date of Settlement / Award or Date of Execution.';
+            }
+
+            if ($agreement === '') {
+                $errors[] = 'Main Point of Agreement is required for CFA cases.';
+            } elseif (!$this->cfaAgreementIsValid($agreement)) {
+                $errors[] = 'Main Point of Agreement for CFA cases must explain why the case failed and why it needs to move forward.';
+            }
+        }
+    }
+
+    private function endorsedAgreementIsValid(string $agreement): bool
+    {
+        $lower = strtolower($agreement);
+
+        return str_contains($lower, 'higher district')
+            && (str_contains($lower, 'further action') || str_contains($lower, 'needs further action'));
+    }
+
+    private function cfaAgreementIsValid(string $agreement): bool
+    {
+        $lower = strtolower($agreement);
+        $mentionsFailure = str_contains($lower, 'failed') || str_contains($lower, 'failure') || str_contains($lower, 'fail');
+        $mentionsForward = str_contains($lower, 'move forward') || str_contains($lower, 'moving forward') || str_contains($lower, 'further action');
+
+        return $mentionsFailure && $mentionsForward;
+    }
+
+    private function dismissalReasonIsValid(string $agreement): bool
+    {
+        $normalized = strtolower(trim($agreement));
+
+        foreach (self::DISMISSAL_REASONS as $reason) {
+            if ($normalized === strtolower($reason)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function normalizeStatus(string $status): string
@@ -1030,13 +1158,12 @@ class CaseModel
         $lower = strtolower($status);
 
         return match ($lower) {
-            'cfa', 'cfa (call for action)', 'call for action' => self::STATUS_CFA,
-            'settled' => self::STATUS_SETTLED,
+            'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action' => self::STATUS_CFA,
             'endorsed' => 'Endorsed',
             'dismissed' => 'Dismissed',
-            'm', 'mediation' => 'Mediation',
-            'c', 'conciliation' => 'Conciliation',
-            'for conciliation stage' => 'For Conciliation Stage',
+            'm', 'mediation' => self::STATUS_MEDIATION,
+            'c', 'conciliation', 'for conciliation stage' => self::STATUS_CONCILIATION,
+            'settled' => self::STATUS_CONCILIATION,
             default => $status,
         };
     }
@@ -1294,7 +1421,7 @@ class CaseModel
             nature_of_case VARCHAR(150) NOT NULL,
             date_filed DATE NOT NULL,
             date_initial_confrontation DATE NULL,
-            case_status VARCHAR(50) NOT NULL,
+            case_status VARCHAR(50) NOT NULL DEFAULT 'Mediation',
             date_settlement_award DATE NULL,
             date_execution DATE NULL,
             detailed_case_description TEXT NOT NULL,
@@ -1316,7 +1443,7 @@ class CaseModel
             'nature_of_case' => "ALTER TABLE cases ADD COLUMN nature_of_case VARCHAR(150) NOT NULL DEFAULT ''",
             'date_filed' => 'ALTER TABLE cases ADD COLUMN date_filed DATE NULL',
             'date_initial_confrontation' => 'ALTER TABLE cases ADD COLUMN date_initial_confrontation DATE NULL',
-            'case_status' => 'ALTER TABLE cases ADD COLUMN case_status VARCHAR(50) NOT NULL DEFAULT \'CFA (Call for Action)\'',
+            'case_status' => 'ALTER TABLE cases ADD COLUMN case_status VARCHAR(50) NOT NULL DEFAULT \'Mediation\'',
             'date_settlement_award' => 'ALTER TABLE cases ADD COLUMN date_settlement_award DATE NULL',
             'date_execution' => 'ALTER TABLE cases ADD COLUMN date_execution DATE NULL',
             'detailed_case_description' => 'ALTER TABLE cases ADD COLUMN detailed_case_description TEXT NULL',
@@ -1401,7 +1528,11 @@ class CaseModel
         }
 
         if ($this->columnExists('cases', 'status')) {
-            $this->executeStatement("ALTER TABLE cases MODIFY status VARCHAR(50) NOT NULL DEFAULT 'CFA (Call for Action)'");
+            $this->executeStatement("ALTER TABLE cases MODIFY status VARCHAR(50) NOT NULL DEFAULT 'Mediation'");
+        }
+
+        if ($this->columnExists('cases', 'case_status')) {
+            $this->executeStatement("ALTER TABLE cases MODIFY case_status VARCHAR(50) NOT NULL DEFAULT 'Mediation'");
         }
 
         if ($this->columnExists('cases', 'case_description')) {
@@ -1533,11 +1664,10 @@ class CaseModel
 
         return match ($status) {
             'new' => 'DATE(date_created) = CURDATE()',
-            'cfa' => "LOWER(case_status) IN ('cfa', 'cfa (call for action)')",
+            'cfa' => "LOWER(case_status) IN ('cfa', 'cfa (call for action)', 'cfa (certificate to file action)')",
             'm' => "LOWER(case_status) IN ('m', 'mediation')",
             'c' => "LOWER(case_status) IN ('c', 'conciliation', 'for conciliation stage')",
-            'settled' => "LOWER(case_status) = 'settled'",
-            'resolved' => "LOWER(case_status) IN ('settled', 'm', 'mediation', 'c', 'conciliation')",
+            'resolved' => "LOWER(case_status) IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)')",
             'endorsed' => "LOWER(case_status) = 'endorsed'",
             'dismissed' => "LOWER(case_status) = 'dismissed'",
             default => '',

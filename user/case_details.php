@@ -23,19 +23,29 @@ function detail_value(?string $value): string
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
 }
 
+function detail_case_status_value(string $status): string
+{
+    return match (strtolower(trim($status))) {
+        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action' => 'CFA (Certificate to File Action)',
+        'm', 'mediation' => 'Mediation',
+        'c', 'conciliation', 'for conciliation stage' => 'Conciliation',
+        default => $status,
+    };
+}
+
 $statusOptions = [
-    'For Conciliation Stage',
     'Mediation',
     'Conciliation',
-    'CFA (Call for Action)',
-    'Settled',
+    'CFA (Certificate to File Action)',
     'Endorsed',
     'Dismissed',
 ];
 
-$caseStatus = (string) ($case['case_status'] ?? '');
+$rawCaseStatus = (string) ($case['case_status'] ?? '');
+$caseStatus = detail_case_status_value($rawCaseStatus);
+$removedStatusValues = ['settled'];
 
-if ($caseStatus !== '' && !in_array($caseStatus, $statusOptions, true)) {
+if ($caseStatus !== '' && !in_array(strtolower(trim($rawCaseStatus)), $removedStatusValues, true) && !in_array($caseStatus, $statusOptions, true)) {
     $statusOptions[] = $caseStatus;
 }
 ?>
@@ -153,6 +163,9 @@ if ($caseStatus !== '' && !in_array($caseStatus, $statusOptions, true)) {
                                         <div class="form-group status-field-group">
                                             <label for="status">Case Status</label>
                                             <select id="status" disabled>
+                                                <?php if (in_array(strtolower(trim($rawCaseStatus)), $removedStatusValues, true)): ?>
+                                                    <option value="" selected>Select case status</option>
+                                                <?php endif; ?>
                                                 <?php foreach ($statusOptions as $option): ?>
                                                     <option value="<?php echo htmlspecialchars($option); ?>" <?php echo $caseStatus === $option ? 'selected' : ''; ?>><?php echo htmlspecialchars($option); ?></option>
                                                 <?php endforeach; ?>
@@ -207,6 +220,7 @@ if ($caseStatus !== '' && !in_array($caseStatus, $statusOptions, true)) {
                                 <div class="text-actions">
                                     <a href="my_entries.php">Back to My Entries</a>
                                 </div>
+                                <a class="primary-button compact" href="print_case.php?id=<?php echo (int) ($case['id'] ?? 0); ?>">Print Case</a>
                             </div>
                         </form>
                     </section>

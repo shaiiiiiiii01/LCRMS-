@@ -190,11 +190,24 @@ document.addEventListener("DOMContentLoaded", () => {
             field = document.createElement("select");
             field.disabled = true;
 
-            const option = document.createElement("option");
-            option.value = fieldValue;
-            option.textContent = fieldValue || "Not set";
-            option.selected = true;
-            field.appendChild(option);
+            const choices = options.choices || [{ value: fieldValue, label: fieldValue || "Not set" }];
+            const hasSelectedChoice = choices.some((choice) => choice.value === fieldValue);
+
+            if (fieldValue && !hasSelectedChoice) {
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = "Select case status";
+                option.selected = true;
+                field.appendChild(option);
+            }
+
+            choices.forEach((choice) => {
+                const option = document.createElement("option");
+                option.value = choice.value;
+                option.textContent = choice.label;
+                option.selected = choice.value === fieldValue;
+                field.appendChild(option);
+            });
         } else {
             field = document.createElement("input");
             field.type = "text";
@@ -227,13 +240,48 @@ document.addEventListener("DOMContentLoaded", () => {
         return section;
     };
 
+    const normalizeCaseStatusValue = (status) => {
+        const value = String(status || "").trim();
+        const lower = value.toLowerCase();
+
+        if (lower === "cfa" || lower === "cfa (call for action)" || lower === "call for action" || lower === "cfa (certificate to file action)" || lower === "certificate to file action") {
+            return "CFA (Certificate to File Action)";
+        }
+
+        if (lower === "m" || lower === "mediation") {
+            return "Mediation";
+        }
+
+        if (lower === "c" || lower === "conciliation" || lower === "for conciliation stage") {
+            return "Conciliation";
+        }
+
+        return value;
+    };
+
     const renderCaseDetails = (body, caseData) => {
         const form = document.createElement("form");
         const grid = document.createElement("div");
+        const actions = document.createElement("div");
+        const textActions = document.createElement("div");
+        const printLink = document.createElement("a");
+        const caseStatusValue = normalizeCaseStatusValue(caseData.case_status);
+        const statusChoices = [
+            { value: "Mediation", label: "Mediation" },
+            { value: "Conciliation", label: "Conciliation" },
+            { value: "CFA (Certificate to File Action)", label: "CFA (Certificate to File Action)" },
+            { value: "Endorsed", label: "Endorsed" },
+            { value: "Dismissed", label: "Dismissed" },
+        ];
 
         form.className = "case-form readonly-case-form case-details-form";
         form.setAttribute("aria-label", "Read-only case details");
         grid.className = "case-form-grid";
+        actions.className = "case-form-actions";
+        textActions.className = "text-actions";
+        printLink.className = "primary-button compact";
+        printLink.href = `print_case.php?id=${encodeURIComponent(caseData.id || "")}`;
+        printLink.textContent = "Print Case";
 
         grid.append(
             createCaseDetailSection(
@@ -252,7 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 [
                     createCaseDetailField("Date Filed", caseData.date_filed),
                     createCaseDetailField("Date of Initial Confrontation", caseData.date_initial_confrontation),
-                    createCaseDetailField("Case Status", caseData.case_status, { type: "select" }),
+                    createCaseDetailField("Case Status", caseStatusValue, { type: "select", choices: statusChoices }),
                     createCaseDetailField("Date of Settlement / Award", caseData.date_settlement_award),
                     createCaseDetailField("Date of Execution", caseData.date_execution),
                 ],
@@ -269,7 +317,8 @@ document.addEventListener("DOMContentLoaded", () => {
             )
         );
 
-        form.appendChild(grid);
+        actions.append(textActions, printLink);
+        form.append(grid, actions);
         body.replaceChildren(form);
     };
 
@@ -363,6 +412,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    let caseValidationMessageId = 0;
+
     const isRadioGroupField = (field) => typeof RadioNodeList !== "undefined" && field instanceof RadioNodeList;
 
     const getCaseFieldValue = (field) => {
@@ -378,6 +429,55 @@ document.addEventListener("DOMContentLoaded", () => {
         return firstField ? firstField.closest("[data-choice-boxes]") : null;
     };
 
+    const getCaseFieldGroup = (field) => {
+        const firstField = isRadioGroupField(field) ? Array.from(field)[0] : field;
+        return firstField ? firstField.closest(".form-group") : null;
+    };
+
+    const getCaseFieldName = (field) => {
+        const firstField = isRadioGroupField(field) ? Array.from(field)[0] : field;
+        return firstField ? firstField.name : "";
+    };
+
+    const getCaseDateShell = (field) => {
+        if (isRadioGroupField(field)) {
+            return null;
+        }
+
+        return field.closest(".date-field");
+    };
+
+    const ensureCaseFieldMessage = (field) => {
+        const group = getCaseFieldGroup(field);
+        const name = getCaseFieldName(field);
+        let message = group?.querySelector(`[data-case-field-message="${name}"]`);
+
+        if (!group || !name) {
+            return null;
+        }
+
+        if (!message) {
+            const firstField = isRadioGroupField(field) ? Array.from(field)[0] : field;
+
+            message = document.createElement("p");
+            message.className = "case-field-message";
+            message.dataset.caseFieldMessage = name;
+            message.id = `case-field-message-${++caseValidationMessageId}`;
+            message.hidden = true;
+            group.appendChild(message);
+
+            if (isRadioGroupField(field)) {
+                Array.from(field).forEach((input) => {
+                    input.setAttribute("aria-describedby", message.id);
+                });
+            } else if (firstField) {
+                firstField.setAttribute("aria-describedby", message.id);
+            }
+        }
+
+        return message;
+    };
+
     const clearCaseFieldErrors = (form) => {
         form.querySelectorAll(".is-invalid").forEach((field) => {
             field.classList.remove("is-invalid");
@@ -386,35 +486,216 @@ document.addEventListener("DOMContentLoaded", () => {
         form.querySelectorAll("[aria-invalid='true']").forEach((field) => {
             field.removeAttribute("aria-invalid");
         });
+
+        form.querySelectorAll("[data-case-field-message]").forEach((message) => {
+            message.textContent = "";
+            message.hidden = true;
+        });
     };
 
-    const setCaseFieldError = (field) => {
-        if (isRadioGroupField(field)) {
-            Array.from(field).forEach((input) => input.setAttribute("aria-invalid", "true"));
-            getChoiceBoxGroup(field)?.classList.add("is-invalid");
+    const clearCaseFieldError = (field) => {
+        if (!field) {
             return;
         }
 
-        field.classList.add("is-invalid");
-        field.setAttribute("aria-invalid", "true");
+        const message = ensureCaseFieldMessage(field);
+
+        if (isRadioGroupField(field)) {
+            Array.from(field).forEach((input) => input.removeAttribute("aria-invalid"));
+            getChoiceBoxGroup(field)?.classList.remove("is-invalid");
+        } else {
+            field.classList.remove("is-invalid");
+            field.removeAttribute("aria-invalid");
+            getCaseDateShell(field)?.classList.remove("is-invalid");
+        }
+
+        if (message) {
+            message.textContent = "";
+            message.hidden = true;
+        }
+    };
+
+    const setCaseFieldError = (field, messageText = "") => {
+        const message = ensureCaseFieldMessage(field);
+
+        if (isRadioGroupField(field)) {
+            Array.from(field).forEach((input) => input.setAttribute("aria-invalid", "true"));
+            getChoiceBoxGroup(field)?.classList.add("is-invalid");
+        } else {
+            field.classList.add("is-invalid");
+            field.setAttribute("aria-invalid", "true");
+            getCaseDateShell(field)?.classList.add("is-invalid");
+        }
+
+        if (message && messageText) {
+            message.textContent = messageText;
+            message.hidden = false;
+        }
+    };
+
+    const normalizeCaseStatusKey = (status) => {
+        const value = String(status || "").trim().toLowerCase();
+
+        if (value === "cfa" || value === "cfa (call for action)" || value === "call for action" || value === "cfa (certificate to file action)" || value === "certificate to file action") {
+            return "cfa";
+        }
+
+        return value;
+    };
+
+    const addCaseValidationError = (form, errorsByName, name, message) => {
+        if (errorsByName.has(name)) {
+            return;
+        }
+
+        const field = form.elements[name];
+
+        if (!field) {
+            return;
+        }
+
+        errorsByName.set(name, message);
+        setCaseFieldError(field, message);
+    };
+
+    const getCaseFormValue = (form, name) => getCaseFieldValue(form.elements[name]).trim();
+
+    const getSettlementDependencyMessage = (dateFiled, initialConfrontation) => {
+        if (!dateFiled && !initialConfrontation) {
+            return "Please enter Date Filed and Initial Confrontation Date first.";
+        }
+
+        if (!dateFiled) {
+            return "Please enter Date Filed first.";
+        }
+
+        if (!initialConfrontation) {
+            return "Initial Confrontation Date is required before settlement date.";
+        }
+
+        return "";
+    };
+
+    const validateCaseRules = (form) => {
+        const errorsByName = new Map();
+        const dateFiled = getCaseFormValue(form, "date_filed");
+        const initialConfrontation = getCaseFormValue(form, "date_initial_confrontation");
+        const settlementAward = getCaseFormValue(form, "date_settlement_award");
+        const executionDate = getCaseFormValue(form, "date_execution");
+        const agreement = getCaseFormValue(form, "main_point_of_agreement");
+        const status = normalizeCaseStatusKey(getCaseFormValue(form, "case_status"));
+
+        requiredCaseFields.forEach((name) => {
+            if (getCaseFormValue(form, name) === "") {
+                addCaseValidationError(form, errorsByName, name, `${caseFieldLabels[name]} is required.`);
+            }
+        });
+
+        if (initialConfrontation && !dateFiled) {
+            addCaseValidationError(form, errorsByName, "date_initial_confrontation", "Please enter Date Filed first.");
+        }
+
+        if (settlementAward) {
+            const message = getSettlementDependencyMessage(dateFiled, initialConfrontation);
+
+            if (message) {
+                addCaseValidationError(form, errorsByName, "date_settlement_award", message);
+            }
+        }
+
+        if (executionDate && !settlementAward) {
+            addCaseValidationError(form, errorsByName, "date_execution", "Settlement date is required before execution date.");
+        }
+
+        if ((status === "settled" || settlementAward) && !agreement) {
+            addCaseValidationError(form, errorsByName, "main_point_of_agreement", "Main Point of Agreement is required for settled cases.");
+        }
+
+        if (status === "endorsed") {
+            if (settlementAward || executionDate) {
+                addCaseValidationError(form, errorsByName, "case_status", "Endorsed cases must not have settlement or execution dates.");
+            }
+
+            if (!agreement) {
+                addCaseValidationError(form, errorsByName, "main_point_of_agreement", "Main Point of Agreement is required for endorsed cases.");
+            }
+        }
+
+        if (status === "dismissed") {
+            if (settlementAward || executionDate) {
+                addCaseValidationError(form, errorsByName, "case_status", "Dismissed cases must not have settlement or execution dates.");
+            }
+
+            if (!agreement) {
+                addCaseValidationError(form, errorsByName, "main_point_of_agreement", "Dismissal reason is required.");
+            }
+        }
+
+        if (status === "cfa") {
+            if (settlementAward || executionDate) {
+                addCaseValidationError(form, errorsByName, "case_status", "CFA cases must not have settlement or execution dates.");
+            }
+
+            if (!agreement) {
+                addCaseValidationError(form, errorsByName, "main_point_of_agreement", "Main Point of Agreement is required for CFA cases.");
+            }
+        }
+
+        return Array.from(errorsByName.values());
+    };
+
+    const updateCaseDateFieldAvailability = (form) => {
+        const dateFiled = getCaseFormValue(form, "date_filed");
+        const initialConfrontation = getCaseFormValue(form, "date_initial_confrontation");
+        const settlementAward = getCaseFormValue(form, "date_settlement_award");
+        const initialField = form.elements.date_initial_confrontation;
+        const settlementField = form.elements.date_settlement_award;
+        const executionField = form.elements.date_execution;
+
+        if (initialField) {
+            initialField.disabled = !dateFiled;
+        }
+
+        if (settlementField) {
+            settlementField.disabled = !dateFiled || !initialConfrontation;
+        }
+
+        if (executionField) {
+            executionField.disabled = !dateFiled || !initialConfrontation || !settlementAward;
+        }
+    };
+
+    const showBlockedCaseDateMessage = (form, name) => {
+        const field = form.elements[name];
+        const dateFiled = getCaseFormValue(form, "date_filed");
+        const initialConfrontation = getCaseFormValue(form, "date_initial_confrontation");
+        const settlementAward = getCaseFormValue(form, "date_settlement_award");
+        let message = "";
+
+        if (!field) {
+            return false;
+        }
+
+        if (name === "date_initial_confrontation" && !dateFiled) {
+            message = "Please enter Date Filed first.";
+        } else if (name === "date_settlement_award") {
+            message = getSettlementDependencyMessage(dateFiled, initialConfrontation);
+        } else if (name === "date_execution" && !settlementAward) {
+            message = "Settlement date is required before execution date.";
+        }
+
+        if (!message) {
+            return false;
+        }
+
+        setCaseFieldError(field, message);
+        return true;
     };
 
     const validateCaseForm = (form) => {
-        const errors = [];
-
         clearCaseFieldErrors(form);
-
-        requiredCaseFields.forEach((name) => {
-            const field = form.elements[name];
-
-            if (!field || getCaseFieldValue(field).trim() !== "") {
-                return;
-            }
-
-            const message = `${caseFieldLabels[name]} is required.`;
-            errors.push(message);
-            setCaseFieldError(field);
-        });
+        updateCaseDateFieldAvailability(form);
+        const errors = validateCaseRules(form);
 
         if (errors.length > 0) {
             showCaseModal(
@@ -439,32 +720,63 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const clearFieldError = () => {
-                if (getCaseFieldValue(field).trim() === "") {
-                    return;
-                }
-
-                if (isRadioGroupField(field)) {
-                    Array.from(field).forEach((input) => input.removeAttribute("aria-invalid"));
-                    getChoiceBoxGroup(field)?.classList.remove("is-invalid");
-                    return;
-                }
-
-                field.classList.remove("is-invalid");
-                field.removeAttribute("aria-invalid");
+            const validateField = () => {
+                clearCaseFieldErrors(form);
+                updateCaseDateFieldAvailability(form);
+                validateCaseRules(form);
             };
 
             if (isRadioGroupField(field)) {
-                Array.from(field).forEach((input) => input.addEventListener("change", clearFieldError));
+                Array.from(field).forEach((input) => input.addEventListener("change", validateField));
                 return;
             }
 
-            field.addEventListener("input", clearFieldError);
+            field.addEventListener("input", validateField);
+            field.addEventListener("change", validateField);
         });
+
+        ["date_initial_confrontation", "date_settlement_award", "date_execution", "case_status", "main_point_of_agreement"].forEach((name) => {
+            const field = form.elements[name];
+
+            if (!field) {
+                return;
+            }
+
+            const validateField = () => {
+                clearCaseFieldErrors(form);
+                updateCaseDateFieldAvailability(form);
+                validateCaseRules(form);
+            };
+
+            field.addEventListener("input", validateField);
+            field.addEventListener("change", validateField);
+            field.addEventListener("focus", () => {
+                if (showBlockedCaseDateMessage(form, name)) {
+                    return;
+                }
+
+                validateField();
+            });
+
+            getCaseDateShell(field)?.addEventListener("click", () => {
+                if (field.disabled) {
+                    showBlockedCaseDateMessage(form, name);
+                }
+            });
+
+            getCaseFieldGroup(field)?.addEventListener("click", () => {
+                if (field.disabled) {
+                    showBlockedCaseDateMessage(form, name);
+                }
+            });
+        });
+
+        updateCaseDateFieldAvailability(form);
 
         form.addEventListener("reset", () => {
             window.setTimeout(() => {
                 clearCaseFieldErrors(form);
+                updateCaseDateFieldAvailability(form);
             }, 0);
         });
 

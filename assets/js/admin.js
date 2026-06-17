@@ -128,6 +128,15 @@ document.addEventListener("DOMContentLoaded", () => {
             field.disabled = !options.editable;
 
             const choices = options.choices || [{ value: fieldValue, label: fieldValue || "Not set" }];
+            const hasSelectedChoice = choices.some((choice) => choice.value === fieldValue);
+
+            if (fieldValue && !hasSelectedChoice) {
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = "Select case status";
+                option.selected = true;
+                field.appendChild(option);
+            }
 
             choices.forEach((choice) => {
                 const option = document.createElement("option");
@@ -195,25 +204,250 @@ document.addEventListener("DOMContentLoaded", () => {
         return section;
     };
 
+    const normalizeAdminCaseStatusValue = (status) => {
+        const value = String(status || "").trim();
+        const lower = value.toLowerCase();
+
+        if (lower === "cfa" || lower === "cfa (call for action)" || lower === "call for action" || lower === "cfa (certificate to file action)" || lower === "certificate to file action") {
+            return "CFA (Certificate to File Action)";
+        }
+
+        if (lower === "m" || lower === "mediation") {
+            return "Mediation";
+        }
+
+        if (lower === "c" || lower === "conciliation" || lower === "for conciliation stage") {
+            return "Conciliation";
+        }
+
+        return value;
+    };
+
+    let adminCaseValidationMessageId = 0;
+
+    const normalizeAdminCaseStatusKey = (status) => {
+        const value = String(status || "").trim().toLowerCase();
+
+        if (value === "cfa" || value === "cfa (call for action)" || value === "call for action" || value === "cfa (certificate to file action)" || value === "certificate to file action") {
+            return "cfa";
+        }
+
+        return value;
+    };
+
+    const getAdminCaseFieldValue = (form, name) => String(form.elements[name]?.value || "").trim();
+
+    const ensureAdminCaseFieldMessage = (field) => {
+        const group = field?.closest(".form-group");
+        const name = field?.name || "";
+        let message = group?.querySelector(`[data-admin-case-field-message="${name}"]`);
+
+        if (!group || !name) {
+            return null;
+        }
+
+        if (!message) {
+            message = document.createElement("p");
+            message.className = "case-field-message";
+            message.dataset.adminCaseFieldMessage = name;
+            message.id = `admin-case-field-message-${++adminCaseValidationMessageId}`;
+            message.hidden = true;
+            group.appendChild(message);
+            field.setAttribute("aria-describedby", message.id);
+        }
+
+        return message;
+    };
+
+    const clearAdminCaseFieldErrors = (form) => {
+        form.querySelectorAll(".is-invalid").forEach((field) => {
+            field.classList.remove("is-invalid");
+        });
+
+        form.querySelectorAll("[aria-invalid='true']").forEach((field) => {
+            field.removeAttribute("aria-invalid");
+        });
+
+        form.querySelectorAll("[data-admin-case-field-message]").forEach((message) => {
+            message.textContent = "";
+            message.hidden = true;
+        });
+    };
+
+    const setAdminCaseFieldError = (field, messageText) => {
+        const message = ensureAdminCaseFieldMessage(field);
+
+        if (!field) {
+            return;
+        }
+
+        field.classList.add("is-invalid");
+        field.setAttribute("aria-invalid", "true");
+
+        if (message && messageText) {
+            message.textContent = messageText;
+            message.hidden = false;
+        }
+    };
+
+    const addAdminCaseValidationError = (form, errorsByName, name, message) => {
+        if (errorsByName.has(name)) {
+            return;
+        }
+
+        const field = form.elements[name];
+
+        if (!field) {
+            return;
+        }
+
+        errorsByName.set(name, message);
+        setAdminCaseFieldError(field, message);
+    };
+
+    const getAdminSettlementDependencyMessage = (dateFiled, initialConfrontation) => {
+        if (!dateFiled && !initialConfrontation) {
+            return "Please enter Date Filed and Initial Confrontation Date first.";
+        }
+
+        if (!dateFiled) {
+            return "Please enter Date Filed first.";
+        }
+
+        if (!initialConfrontation) {
+            return "Initial Confrontation Date is required before settlement date.";
+        }
+
+        return "";
+    };
+
+    const validateAdminCaseRules = (form) => {
+        const errorsByName = new Map();
+        const dateFiled = getAdminCaseFieldValue(form, "date_filed");
+        const initialConfrontation = getAdminCaseFieldValue(form, "date_initial_confrontation");
+        const settlementAward = getAdminCaseFieldValue(form, "date_settlement_award");
+        const executionDate = getAdminCaseFieldValue(form, "date_execution");
+        const agreement = getAdminCaseFieldValue(form, "main_point_of_agreement");
+        const status = normalizeAdminCaseStatusKey(getAdminCaseFieldValue(form, "case_status"));
+
+        if (!status) {
+            addAdminCaseValidationError(form, errorsByName, "case_status", "Select a valid case status.");
+        }
+
+        if (settlementAward) {
+            const message = getAdminSettlementDependencyMessage(dateFiled, initialConfrontation);
+
+            if (message) {
+                addAdminCaseValidationError(form, errorsByName, "date_settlement_award", message);
+            }
+        }
+
+        if (executionDate && !settlementAward) {
+            addAdminCaseValidationError(form, errorsByName, "date_execution", "Settlement date is required before execution date.");
+        }
+
+        if ((status === "settled" || settlementAward) && !agreement) {
+            addAdminCaseValidationError(form, errorsByName, "main_point_of_agreement", "Main Point of Agreement is required for settled cases.");
+        }
+
+        if (status === "endorsed") {
+            if (settlementAward || executionDate) {
+                addAdminCaseValidationError(form, errorsByName, "case_status", "Endorsed cases must not have settlement or execution dates.");
+            }
+
+            if (!agreement) {
+                addAdminCaseValidationError(form, errorsByName, "main_point_of_agreement", "Main Point of Agreement is required for endorsed cases.");
+            }
+        }
+
+        if (status === "dismissed") {
+            if (settlementAward || executionDate) {
+                addAdminCaseValidationError(form, errorsByName, "case_status", "Dismissed cases must not have settlement or execution dates.");
+            }
+
+            if (!agreement) {
+                addAdminCaseValidationError(form, errorsByName, "main_point_of_agreement", "Dismissal reason is required.");
+            }
+        }
+
+        if (status === "cfa") {
+            if (settlementAward || executionDate) {
+                addAdminCaseValidationError(form, errorsByName, "case_status", "CFA cases must not have settlement or execution dates.");
+            }
+
+            if (!agreement) {
+                addAdminCaseValidationError(form, errorsByName, "main_point_of_agreement", "Main Point of Agreement is required for CFA cases.");
+            }
+        }
+
+        return Array.from(errorsByName.values());
+    };
+
+    const updateAdminCaseDateFieldAvailability = (form) => {
+        const dateFiled = getAdminCaseFieldValue(form, "date_filed");
+        const initialConfrontation = getAdminCaseFieldValue(form, "date_initial_confrontation");
+        const settlementAward = getAdminCaseFieldValue(form, "date_settlement_award");
+        const settlementField = form.elements.date_settlement_award;
+        const executionField = form.elements.date_execution;
+
+        if (settlementField) {
+            settlementField.disabled = !dateFiled || !initialConfrontation;
+        }
+
+        if (executionField) {
+            executionField.disabled = !dateFiled || !initialConfrontation || !settlementAward;
+        }
+    };
+
+    const showBlockedAdminCaseDateMessage = (form, name) => {
+        const field = form.elements[name];
+        const dateFiled = getAdminCaseFieldValue(form, "date_filed");
+        const initialConfrontation = getAdminCaseFieldValue(form, "date_initial_confrontation");
+        const settlementAward = getAdminCaseFieldValue(form, "date_settlement_award");
+        let message = "";
+
+        if (!field) {
+            return false;
+        }
+
+        if (name === "date_settlement_award") {
+            message = getAdminSettlementDependencyMessage(dateFiled, initialConfrontation);
+        } else if (name === "date_execution" && !settlementAward) {
+            message = "Settlement date is required before execution date.";
+        }
+
+        if (!message) {
+            return false;
+        }
+
+        setAdminCaseFieldError(field, message);
+        return true;
+    };
+
     const renderAdminCaseDetails = (body, caseData, apiUrl = "cases_api.php") => {
         const form = document.createElement("form");
         const grid = document.createElement("div");
         const feedback = document.createElement("p");
         const actions = document.createElement("div");
+        const printLink = document.createElement("a");
         const saveButton = document.createElement("button");
+        const caseStatusValue = normalizeAdminCaseStatusValue(caseData.case_status);
 
         const statusChoices = [
-            { value: "CFA (Call for Action)", label: "CFA" },
-            { value: "Mediation", label: "M" },
-            { value: "Conciliation", label: "C" },
-            { value: "For Conciliation Stage", label: "For Conciliation Stage" },
-            { value: "Settled", label: "Settled" },
+            { value: "Mediation", label: "Mediation" },
+            { value: "Conciliation", label: "Conciliation" },
+            { value: "CFA (Certificate to File Action)", label: "CFA (Certificate to File Action)" },
             { value: "Endorsed", label: "Endorsed" },
             { value: "Dismissed", label: "Dismissed" },
         ];
+        const removedStatusValues = new Set(["settled"]);
 
-        if (caseData.case_status && !statusChoices.some((choice) => choice.value === caseData.case_status)) {
-            statusChoices.unshift({ value: caseData.case_status, label: caseData.case_status });
+        if (
+            caseStatusValue
+            && !removedStatusValues.has(String(caseStatusValue).trim().toLowerCase())
+            && !statusChoices.some((choice) => choice.value === caseStatusValue)
+        ) {
+            statusChoices.unshift({ value: caseStatusValue, label: caseStatusValue });
         }
 
         form.className = "case-form case-details-form admin-edit-case-form";
@@ -222,6 +456,9 @@ document.addEventListener("DOMContentLoaded", () => {
         feedback.className = "admin-case-save-message";
         feedback.hidden = true;
         actions.className = "admin-case-modal-actions";
+        printLink.className = "admin-primary-button compact";
+        printLink.href = `print_case.php?id=${encodeURIComponent(caseData.id || "")}`;
+        printLink.textContent = "Print Case";
         saveButton.className = "admin-primary-button compact";
         saveButton.type = "submit";
         saveButton.textContent = "Save Changes";
@@ -232,12 +469,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Basic filing details used to classify and locate the case record.",
                 [
                     createAdminCaseDetailField("Case Number", caseData.case_number),
-                    createAdminCaseDetailField("Case Title", caseData.case_title, { name: "case_title", editable: true, wide: true }),
-                    createAdminCaseDetailField("Complainant Title", caseData.complainant_title, { name: "complainant_title", editable: true }),
+                    createAdminCaseDetailField("Case Title", caseData.case_title, { name: "case_title", editable: false, wide: true }),
+                    createAdminCaseDetailField("Complainant Title", caseData.complainant_title, { name: "complainant_title", editable: false }),
                     createAdminCaseDetailField("Nature of Case", caseData.nature_of_case, {
                         type: "choice-boxes",
                         name: "nature_of_case",
-                        editable: true,
+                        editable: false,
                         choices: [
                             { value: "Civil", label: "Civil" },
                             { value: "Criminal", label: "Criminal" },
@@ -249,9 +486,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Schedule and Status",
                 "Filing dates, case movement, and current case status.",
                 [
-                    createAdminCaseDetailField("Date Filed", caseData.date_filed, { type: "date", name: "date_filed", editable: true }),
-                    createAdminCaseDetailField("Date of Initial Confrontation", caseData.date_initial_confrontation, { type: "date", name: "date_initial_confrontation", editable: true }),
-                    createAdminCaseDetailField("Case Status", caseData.case_status, { type: "select", name: "case_status", editable: true, choices: statusChoices }),
+                    createAdminCaseDetailField("Date Filed", caseData.date_filed, { type: "date", name: "date_filed", editable: false }),
+                    createAdminCaseDetailField("Date of Initial Confrontation", caseData.date_initial_confrontation, { type: "date", name: "date_initial_confrontation", editable: false }),
+                    createAdminCaseDetailField("Case Status", caseStatusValue, { type: "select", name: "case_status", editable: true, choices: statusChoices }),
                     createAdminCaseDetailField("Date of Settlement / Award", caseData.date_settlement_award, { type: "date", name: "date_settlement_award", editable: true }),
                     createAdminCaseDetailField("Date of Execution", caseData.date_execution, { type: "date", name: "date_execution", editable: true }),
                 ],
@@ -261,18 +498,62 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Case Narrative",
                 "Documented incident details and agreement reached during proceedings.",
                 [
-                    createAdminCaseDetailField("Detailed Case Description", caseData.detailed_case_description, { type: "textarea", name: "detailed_case_description", editable: true, wide: true }),
+                    createAdminCaseDetailField("Detailed Case Description", caseData.detailed_case_description, { type: "textarea", name: "detailed_case_description", editable: false, wide: true }),
                     createAdminCaseDetailField("Main Point of Agreement", caseData.main_point_of_agreement, { type: "textarea", name: "main_point_of_agreement", editable: true, wide: true }),
                 ],
                 "section-grid narrative-grid"
             )
         );
 
-        actions.appendChild(saveButton);
+        actions.append(printLink, saveButton);
         form.append(grid, feedback, actions);
+
+        const validateLiveAdminCaseForm = () => {
+            clearAdminCaseFieldErrors(form);
+            updateAdminCaseDateFieldAvailability(form);
+            validateAdminCaseRules(form);
+        };
+
+        ["date_settlement_award", "date_execution", "case_status", "main_point_of_agreement"].forEach((name) => {
+            const field = form.elements[name];
+
+            if (!field) {
+                return;
+            }
+
+            field.addEventListener("input", validateLiveAdminCaseForm);
+            field.addEventListener("change", validateLiveAdminCaseForm);
+            field.addEventListener("focus", () => {
+                if (showBlockedAdminCaseDateMessage(form, name)) {
+                    return;
+                }
+
+                validateLiveAdminCaseForm();
+            });
+
+            field.closest(".form-group")?.addEventListener("click", () => {
+                if (field.disabled) {
+                    showBlockedAdminCaseDateMessage(form, name);
+                }
+            });
+        });
+
+        updateAdminCaseDateFieldAvailability(form);
 
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
+            clearAdminCaseFieldErrors(form);
+            updateAdminCaseDateFieldAvailability(form);
+            const validationErrors = validateAdminCaseRules(form);
+
+            if (validationErrors.length > 0) {
+                feedback.textContent = "Please resolve validation messages before saving.";
+                feedback.classList.remove("is-success");
+                feedback.classList.add("is-error");
+                feedback.hidden = false;
+                return;
+            }
+
             saveButton.disabled = true;
             saveButton.textContent = "Saving...";
             feedback.hidden = true;

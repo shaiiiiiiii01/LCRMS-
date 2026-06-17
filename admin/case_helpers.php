@@ -31,7 +31,7 @@ function admin_case_status_label(string $status): string
 {
     $normalized = strtolower(trim($status));
 
-    if ($normalized === 'cfa' || $normalized === 'cfa (call for action)') {
+    if ($normalized === 'cfa' || $normalized === 'cfa (call for action)' || $normalized === 'cfa (certificate to file action)') {
         return 'CFA';
     }
 
@@ -50,7 +50,7 @@ function admin_case_badge_class(string $status): string
 {
     $normalized = strtolower(trim($status));
 
-    if ($normalized === 'cfa' || $normalized === 'cfa (call for action)') {
+    if ($normalized === 'cfa' || $normalized === 'cfa (call for action)' || $normalized === 'cfa (certificate to file action)') {
         return 'badge-cfa';
     }
 
