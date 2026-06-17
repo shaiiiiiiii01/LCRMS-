@@ -18,6 +18,33 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    const loginForm = document.querySelector("[data-login-form]");
+    const loginLoading = document.querySelector("[data-login-loading]");
+    const loginSubmit = document.querySelector("[data-login-submit]");
+
+    if (loginForm && loginLoading) {
+        loginForm.addEventListener("submit", () => {
+            loginLoading.setAttribute("aria-hidden", "false");
+            document.body.classList.add("is-login-loading");
+
+            if (loginSubmit) {
+                loginSubmit.disabled = true;
+                loginSubmit.querySelector("span").textContent = "Signing in...";
+            }
+        });
+    }
+
+    document.querySelectorAll("[data-logout-link]").forEach((logoutLink) => {
+        logoutLink.addEventListener("click", () => {
+            const logoutLoading = document.querySelector("[data-logout-loading]");
+
+            if (logoutLoading) {
+                logoutLoading.setAttribute("aria-hidden", "false");
+                document.body.classList.add("is-session-loading");
+            }
+        });
+    });
+
     document.querySelectorAll("[data-password-visibility-toggle]").forEach((toggle) => {
         toggle.addEventListener("click", () => {
             const targetId = toggle.dataset.passwordTarget || "";
@@ -208,8 +235,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const value = String(status || "").trim();
         const lower = value.toLowerCase();
 
-        if (lower === "cfa" || lower === "cfa (call for action)" || lower === "call for action" || lower === "cfa (certificate to file action)" || lower === "certificate to file action") {
-            return "CFA (Certificate to File Action)";
+        if (lower === "cfa" || lower === "cfa (call for action)" || lower === "call for action" || lower === "cfa (certificate to file action)" || lower === "certificate to file action" || lower === "cfa (certificate of file action)" || lower === "certificate of file action") {
+            return "CFA (Certificate of File Action)";
         }
 
         if (lower === "m" || lower === "mediation") {
@@ -228,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const normalizeAdminCaseStatusKey = (status) => {
         const value = String(status || "").trim().toLowerCase();
 
-        if (value === "cfa" || value === "cfa (call for action)" || value === "call for action" || value === "cfa (certificate to file action)" || value === "certificate to file action") {
+        if (value === "cfa" || value === "cfa (call for action)" || value === "call for action" || value === "cfa (certificate to file action)" || value === "certificate to file action" || value === "cfa (certificate of file action)" || value === "certificate of file action") {
             return "cfa";
         }
 
@@ -436,7 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const statusChoices = [
             { value: "Mediation", label: "Mediation" },
             { value: "Conciliation", label: "Conciliation" },
-            { value: "CFA (Certificate to File Action)", label: "CFA (Certificate to File Action)" },
+            { value: "CFA (Certificate of File Action)", label: "CFA (Certificate of File Action)" },
             { value: "Endorsed", label: "Endorsed" },
             { value: "Dismissed", label: "Dismissed" },
         ];
@@ -480,6 +507,29 @@ document.addEventListener("DOMContentLoaded", () => {
                             { value: "Criminal", label: "Criminal" },
                         ],
                     }),
+                ]
+            ),
+            createAdminCaseDetailSection(
+                "Complainant Information",
+                "Additional personal details for the complainant record.",
+                [
+                    createAdminCaseDetailField("Full Name", caseData.complainant_full_name),
+                    createAdminCaseDetailField("Address", caseData.complainant_address, { wide: true }),
+                    createAdminCaseDetailField("Status", caseData.complainant_status),
+                    createAdminCaseDetailField("Religion", caseData.complainant_religion),
+                    createAdminCaseDetailField("Birthdate", caseData.complainant_birthdate, { type: "date" }),
+                    createAdminCaseDetailField("Age", caseData.complainant_age),
+                    createAdminCaseDetailField("Government ID", caseData.complainant_government_id),
+                    createAdminCaseDetailField("Contact Number", caseData.complainant_contact_number),
+                ]
+            ),
+            createAdminCaseDetailSection(
+                "Respondent Information",
+                "Additional contact details for the respondent record.",
+                [
+                    createAdminCaseDetailField("Full Name", caseData.respondent_full_name),
+                    createAdminCaseDetailField("Contact Number", caseData.respondent_contact_number),
+                    createAdminCaseDetailField("Address", caseData.respondent_address, { wide: true }),
                 ]
             ),
             createAdminCaseDetailSection(
@@ -1192,7 +1242,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteUserName = userManagement.querySelector("[data-delete-user-name]");
     const confirmDeleteButton = userManagement.querySelector("[data-confirm-delete]");
 
-    let users = [];
+    const parseInitialUsers = () => {
+        try {
+            const initialUsers = JSON.parse(userManagement.dataset.initialUsers || "[]");
+            return Array.isArray(initialUsers) ? initialUsers : [];
+        } catch (error) {
+            return [];
+        }
+    };
+
+    let users = parseInitialUsers();
     let editingUserId = null;
     let deletingUserId = null;
     let toastTimer = null;

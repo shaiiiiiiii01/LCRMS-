@@ -5,7 +5,7 @@ class CaseModel
 {
     private const STATUS_MEDIATION = 'Mediation';
     private const STATUS_CONCILIATION = 'Conciliation';
-    private const STATUS_CFA = 'CFA (Certificate to File Action)';
+    private const STATUS_CFA = 'CFA (Certificate of File Action)';
     private const NATURE_OPTIONS = ['Civil', 'Criminal'];
     private const DISMISSAL_REASONS = [
         'Complainant withdrew/dropped the case (inurong ang kaso)',
@@ -29,6 +29,16 @@ class CaseModel
         $dateFiledInput = trim((string) ($payload['date_filed'] ?? ''));
         $details = trim((string) ($payload['detailed_case_description'] ?? ''));
         $agreement = trim((string) ($payload['main_point_of_agreement'] ?? ''));
+        $complainantFullName = trim((string) ($payload['complainant_full_name'] ?? ''));
+        $complainantAddress = trim((string) ($payload['complainant_address'] ?? ''));
+        $complainantStatus = trim((string) ($payload['complainant_status'] ?? ''));
+        $complainantReligion = trim((string) ($payload['complainant_religion'] ?? ''));
+        $complainantBirthdateInput = trim((string) ($payload['complainant_birthdate'] ?? ''));
+        $complainantGovernmentId = trim((string) ($payload['complainant_government_id'] ?? ''));
+        $complainantContactNumber = trim((string) ($payload['complainant_contact_number'] ?? ''));
+        $respondentFullName = trim((string) ($payload['respondent_full_name'] ?? ''));
+        $respondentAddress = trim((string) ($payload['respondent_address'] ?? ''));
+        $respondentContactNumber = trim((string) ($payload['respondent_contact_number'] ?? ''));
         $errors = [];
 
         if ($caseTitle === '') {
@@ -53,7 +63,33 @@ class CaseModel
             $errors[] = 'Detailed Case Description is required.';
         }
 
+        $partyRequiredFields = [
+            'Complainant Full Name' => $complainantFullName,
+            'Complainant Address' => $complainantAddress,
+            'Complainant Status' => $complainantStatus,
+            'Complainant Religion' => $complainantReligion,
+            'Complainant Birthdate' => $complainantBirthdateInput,
+            'Complainant Government ID' => $complainantGovernmentId,
+            'Complainant Contact Number' => $complainantContactNumber,
+            'Respondent Full Name' => $respondentFullName,
+            'Respondent Address' => $respondentAddress,
+            'Respondent Contact Number' => $respondentContactNumber,
+        ];
+
+        foreach ($partyRequiredFields as $label => $value) {
+            if ($value === '') {
+                $errors[] = "{$label} is required.";
+            }
+        }
+
         $dateFiled = $this->parseRequiredDate($dateFiledInput, 'Date Filed', $errors);
+        $complainantBirthdate = $this->parseRequiredDate($complainantBirthdateInput, 'Complainant Birthdate', $errors);
+        $complainantAge = $this->calculateAge($complainantBirthdate);
+
+        if ($complainantBirthdate !== null && $complainantAge === null) {
+            $errors[] = 'Complainant Birthdate must be a valid past date.';
+        }
+
         $initialConfrontation = $this->parseOptionalDate((string) ($payload['date_initial_confrontation'] ?? ''), 'Date of Initial Confrontation', $errors);
         $settlementAward = $this->parseOptionalDate((string) ($payload['date_settlement_award'] ?? ''), 'Date of Settlement / Award', $errors);
         $executionDate = $this->parseOptionalDate((string) ($payload['date_execution'] ?? ''), 'Date of Execution', $errors);
@@ -98,10 +134,21 @@ class CaseModel
                     date_execution,
                     detailed_case_description,
                     main_point_of_agreement,
+                    complainant_full_name,
+                    complainant_address,
+                    complainant_status,
+                    complainant_religion,
+                    complainant_birthdate,
+                    complainant_age,
+                    complainant_government_id,
+                    complainant_contact_number,
+                    respondent_full_name,
+                    respondent_address,
+                    respondent_contact_number,
                     created_by_user_id,
                     created_by,
                     date_created
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
 
             if (!$stmt) {
@@ -110,7 +157,7 @@ class CaseModel
 
             mysqli_stmt_bind_param(
                 $stmt,
-                'sssssssssssiss',
+                'ssssssssssssssssisssssiss',
                 $caseNumber,
                 $caseTitle,
                 $complainantTitle,
@@ -122,6 +169,17 @@ class CaseModel
                 $executionDate,
                 $details,
                 $agreement,
+                $complainantFullName,
+                $complainantAddress,
+                $complainantStatus,
+                $complainantReligion,
+                $complainantBirthdate,
+                $complainantAge,
+                $complainantGovernmentId,
+                $complainantContactNumber,
+                $respondentFullName,
+                $respondentAddress,
+                $respondentContactNumber,
                 $createdByUserId,
                 $createdBy,
                 $dateCreated
@@ -269,7 +327,18 @@ class CaseModel
                 date_settlement_award,
                 date_execution,
                 detailed_case_description,
-                main_point_of_agreement
+                main_point_of_agreement,
+                complainant_full_name,
+                complainant_address,
+                complainant_status,
+                complainant_religion,
+                complainant_birthdate,
+                complainant_age,
+                complainant_government_id,
+                complainant_contact_number,
+                respondent_full_name,
+                respondent_address,
+                respondent_contact_number
             FROM cases
             WHERE {$primaryKey} = ?
                 AND ((created_by_user_id > 0 AND created_by_user_id = ?) OR (created_by_user_id = 0 AND created_by = ?))
@@ -486,9 +555,9 @@ class CaseModel
                 COUNT(*) AS total,
                 SUM(CASE WHEN DATE(date_created) = CURDATE() THEN 1 ELSE 0 END) AS new_today,
                 SUM(CASE WHEN LOWER(case_status) IN ('m', 'mediation', 'c', 'conciliation', 'for conciliation stage') THEN 1 ELSE 0 END) AS pending,
-                SUM(CASE WHEN LOWER(case_status) NOT IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)') THEN 1 ELSE 0 END) AS ongoing,
-                SUM(CASE WHEN LOWER(case_status) IN ('cfa', 'cfa (call for action)', 'cfa (certificate to file action)') THEN 1 ELSE 0 END) AS cfa,
-                SUM(CASE WHEN LOWER(case_status) IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)') THEN 1 ELSE 0 END) AS resolved,
+                SUM(CASE WHEN LOWER(case_status) NOT IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)', 'cfa (certificate of file action)') THEN 1 ELSE 0 END) AS ongoing,
+                SUM(CASE WHEN LOWER(case_status) IN ('cfa', 'cfa (call for action)', 'cfa (certificate to file action)', 'cfa (certificate of file action)') THEN 1 ELSE 0 END) AS cfa,
+                SUM(CASE WHEN LOWER(case_status) IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)', 'cfa (certificate of file action)') THEN 1 ELSE 0 END) AS resolved,
                 SUM(CASE WHEN LOWER(case_status) = 'endorsed' THEN 1 ELSE 0 END) AS endorsed,
                 SUM(CASE WHEN LOWER(case_status) = 'dismissed' THEN 1 ELSE 0 END) AS dismissed
             FROM cases"
@@ -533,6 +602,17 @@ class CaseModel
                 date_execution,
                 detailed_case_description,
                 main_point_of_agreement,
+                complainant_full_name,
+                complainant_address,
+                complainant_status,
+                complainant_religion,
+                complainant_birthdate,
+                complainant_age,
+                complainant_government_id,
+                complainant_contact_number,
+                respondent_full_name,
+                respondent_address,
+                respondent_contact_number,
                 created_by,
                 date_created
             FROM cases
@@ -970,8 +1050,8 @@ class CaseModel
             "SELECT
                 COUNT(*) AS total,
                 SUM(CASE WHEN DATE(date_created) = CURDATE() THEN 1 ELSE 0 END) AS new_today,
-                SUM(CASE WHEN LOWER(case_status) NOT IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)') THEN 1 ELSE 0 END) AS ongoing,
-                SUM(CASE WHEN LOWER(case_status) IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)') THEN 1 ELSE 0 END) AS resolved
+                SUM(CASE WHEN LOWER(case_status) NOT IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)', 'cfa (certificate of file action)') THEN 1 ELSE 0 END) AS ongoing,
+                SUM(CASE WHEN LOWER(case_status) IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)', 'cfa (certificate of file action)') THEN 1 ELSE 0 END) AS resolved
             FROM cases"
         );
 
@@ -1158,7 +1238,7 @@ class CaseModel
         $lower = strtolower($status);
 
         return match ($lower) {
-            'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action' => self::STATUS_CFA,
+            'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action', 'cfa (certificate of file action)', 'certificate of file action' => self::STATUS_CFA,
             'endorsed' => 'Endorsed',
             'dismissed' => 'Dismissed',
             'm', 'mediation' => self::STATUS_MEDIATION,
@@ -1209,6 +1289,28 @@ class CaseModel
         }
 
         return date('Y-m-d', $timestamp);
+    }
+
+    private function calculateAge(?string $birthdate): ?int
+    {
+        if ($birthdate === null || trim($birthdate) === '') {
+            return null;
+        }
+
+        try {
+            $birth = new DateTimeImmutable($birthdate);
+            $today = new DateTimeImmutable('today');
+        } catch (Throwable) {
+            return null;
+        }
+
+        if ($birth > $today) {
+            return null;
+        }
+
+        $age = (int) $birth->diff($today)->y;
+
+        return $age <= 130 ? $age : null;
     }
 
     private function parseImportDate(string $value, string $label, array &$errors, bool $required = false): ?string
@@ -1426,6 +1528,17 @@ class CaseModel
             date_execution DATE NULL,
             detailed_case_description TEXT NOT NULL,
             main_point_of_agreement TEXT NULL,
+            complainant_full_name VARCHAR(255) NOT NULL DEFAULT '',
+            complainant_address TEXT NULL,
+            complainant_status VARCHAR(100) NOT NULL DEFAULT '',
+            complainant_religion VARCHAR(100) NOT NULL DEFAULT '',
+            complainant_birthdate DATE NULL,
+            complainant_age INT UNSIGNED NULL,
+            complainant_government_id VARCHAR(150) NOT NULL DEFAULT '',
+            complainant_contact_number VARCHAR(50) NOT NULL DEFAULT '',
+            respondent_full_name VARCHAR(255) NOT NULL DEFAULT '',
+            respondent_address TEXT NULL,
+            respondent_contact_number VARCHAR(50) NOT NULL DEFAULT '',
             created_by_user_id INT UNSIGNED NOT NULL DEFAULT 0,
             created_by VARCHAR(150) NOT NULL,
             date_created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1448,6 +1561,17 @@ class CaseModel
             'date_execution' => 'ALTER TABLE cases ADD COLUMN date_execution DATE NULL',
             'detailed_case_description' => 'ALTER TABLE cases ADD COLUMN detailed_case_description TEXT NULL',
             'main_point_of_agreement' => 'ALTER TABLE cases ADD COLUMN main_point_of_agreement TEXT NULL',
+            'complainant_full_name' => "ALTER TABLE cases ADD COLUMN complainant_full_name VARCHAR(255) NOT NULL DEFAULT ''",
+            'complainant_address' => 'ALTER TABLE cases ADD COLUMN complainant_address TEXT NULL',
+            'complainant_status' => "ALTER TABLE cases ADD COLUMN complainant_status VARCHAR(100) NOT NULL DEFAULT ''",
+            'complainant_religion' => "ALTER TABLE cases ADD COLUMN complainant_religion VARCHAR(100) NOT NULL DEFAULT ''",
+            'complainant_birthdate' => 'ALTER TABLE cases ADD COLUMN complainant_birthdate DATE NULL',
+            'complainant_age' => 'ALTER TABLE cases ADD COLUMN complainant_age INT UNSIGNED NULL',
+            'complainant_government_id' => "ALTER TABLE cases ADD COLUMN complainant_government_id VARCHAR(150) NOT NULL DEFAULT ''",
+            'complainant_contact_number' => "ALTER TABLE cases ADD COLUMN complainant_contact_number VARCHAR(50) NOT NULL DEFAULT ''",
+            'respondent_full_name' => "ALTER TABLE cases ADD COLUMN respondent_full_name VARCHAR(255) NOT NULL DEFAULT ''",
+            'respondent_address' => 'ALTER TABLE cases ADD COLUMN respondent_address TEXT NULL',
+            'respondent_contact_number' => "ALTER TABLE cases ADD COLUMN respondent_contact_number VARCHAR(50) NOT NULL DEFAULT ''",
             'created_by_user_id' => 'ALTER TABLE cases ADD COLUMN created_by_user_id INT UNSIGNED NOT NULL DEFAULT 0',
             'created_by' => 'ALTER TABLE cases ADD COLUMN created_by VARCHAR(150) NOT NULL DEFAULT \'System\'',
             'date_created' => 'ALTER TABLE cases ADD COLUMN date_created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
@@ -1541,6 +1665,10 @@ class CaseModel
 
         if ($this->columnExists('cases', 'main_point_of_agreement')) {
             $this->executeStatement('ALTER TABLE cases MODIFY main_point_of_agreement TEXT NULL');
+        }
+
+        if ($this->columnExists('cases', 'complainant_age')) {
+            $this->executeStatement('ALTER TABLE cases MODIFY complainant_age INT UNSIGNED NULL');
         }
     }
 
@@ -1664,10 +1792,10 @@ class CaseModel
 
         return match ($status) {
             'new' => 'DATE(date_created) = CURDATE()',
-            'cfa' => "LOWER(case_status) IN ('cfa', 'cfa (call for action)', 'cfa (certificate to file action)')",
+            'cfa' => "LOWER(case_status) IN ('cfa', 'cfa (call for action)', 'cfa (certificate to file action)', 'cfa (certificate of file action)')",
             'm' => "LOWER(case_status) IN ('m', 'mediation')",
             'c' => "LOWER(case_status) IN ('c', 'conciliation', 'for conciliation stage')",
-            'resolved' => "LOWER(case_status) IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)')",
+            'resolved' => "LOWER(case_status) IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)', 'cfa (certificate of file action)')",
             'endorsed' => "LOWER(case_status) = 'endorsed'",
             'dismissed' => "LOWER(case_status) = 'dismissed'",
             default => '',

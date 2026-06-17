@@ -43,7 +43,7 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | LCRMS</title>
-    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/admin.css'); ?>">
 </head>
 <body>
     <div class="admin-layout">
@@ -79,7 +79,7 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
 
                     <article class="admin-stat-card dashboard-stat-card accent-red">
                         <div class="dashboard-stat-copy">
-                            <span class="dashboard-stat-title">Certificate to File Action (CFA)</span>
+                            <span class="dashboard-stat-title">Certificate of File Action (CFA)</span>
                             <strong><?php echo number_format($caseCounts['cfa'] ?? 0); ?></strong>
                             <p>Cases requiring action</p>
                         </div>
@@ -167,7 +167,7 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
                             <table class="admin-cases-table dashboard-cases-table">
                                 <thead>
                                     <tr>
-                                        <th>Case<br>No.</th>
+                                        <th>Case No.</th>
                                         <th>Case Title</th>
                                         <th>Complainant Title</th>
                                         <th>Nature</th>
@@ -178,7 +178,7 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
                                 <tbody>
                                     <?php if ($dashboardCases === []): ?>
                                         <tr>
-                                            <td colspan="6">No case records found.</td>
+                                            <td class="dashboard-empty-cell" colspan="6">No case records found.</td>
                                         </tr>
                                     <?php else: ?>
                                         <?php foreach ($dashboardCases as $case): ?>
@@ -197,9 +197,8 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
                         </div>
 
                         <div class="dashboard-pagination">
-                            <p>Showing <strong><?php echo number_format($dashboardStart); ?></strong> to <strong><?php echo number_format($dashboardEnd); ?></strong> of <strong><?php echo number_format($dashboardTotal); ?></strong> cases</p>
                             <div class="pagination-buttons">
-                                <button type="button" <?php echo $dashboardPage <= 1 ? 'disabled' : 'onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($dashboardPage - 1, $dashboardSearch, $dashboardStatus), ENT_QUOTES) . '\'"'; ?>>Previous</button>
+                                <button type="button" aria-label="Previous page" <?php echo $dashboardPage <= 1 ? 'disabled' : 'onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($dashboardPage - 1, $dashboardSearch, $dashboardStatus), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
                                 <?php foreach (admin_case_pagination_pages($dashboardPage, $dashboardTotalPages) as $page): ?>
                                     <?php if (is_string($page)): ?>
                                         <span>...</span>
@@ -207,7 +206,7 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
                                         <button class="<?php echo $page === $dashboardPage ? 'is-active' : ''; ?>" type="button" onclick="window.location.href='<?php echo htmlspecialchars(admin_case_page_url((int) $page, $dashboardSearch, $dashboardStatus), ENT_QUOTES); ?>'"><?php echo $page; ?></button>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
-                                <button type="button" <?php echo $dashboardPage >= $dashboardTotalPages ? 'disabled' : 'onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($dashboardPage + 1, $dashboardSearch, $dashboardStatus), ENT_QUOTES) . '\'"'; ?>>Next</button>
+                                <button type="button" aria-label="Next page" <?php echo $dashboardPage >= $dashboardTotalPages ? 'disabled' : 'onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($dashboardPage + 1, $dashboardSearch, $dashboardStatus), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
                             </div>
                         </div>
                     </div>

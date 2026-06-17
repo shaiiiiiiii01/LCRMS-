@@ -382,6 +382,154 @@ svg {
     line-height: 1.45;
 }
 
+.login-loading-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    background:
+        linear-gradient(135deg, rgba(6, 18, 34, 0.88), rgba(9, 48, 78, 0.82)),
+        rgba(8, 20, 34, 0.9);
+    backdrop-filter: blur(10px);
+    transition: opacity 180ms ease, visibility 180ms ease;
+}
+
+.is-session-loading .login-loading-screen {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.login-loading-panel {
+    width: min(100%, 360px);
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+    padding: 30px 28px 28px;
+    border: 1px solid rgba(205, 219, 234, 0.58);
+    border-radius: 8px;
+    background:
+        linear-gradient(180deg, rgba(241, 248, 255, 0.96), rgba(229, 243, 255, 0.9)),
+        #f0f8ff;
+    box-shadow: 0 28px 80px rgba(1, 11, 22, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.login-loading-emblem {
+    width: 118px;
+    height: 118px;
+    position: relative;
+    display: grid;
+    place-items: center;
+}
+
+.login-loading-emblem img {
+    width: 82px;
+    height: 82px;
+    position: relative;
+    z-index: 2;
+    object-fit: cover;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #0646ad 0 50%, #c71922 50% 100%);
+    padding: 4px;
+    box-shadow: 0 0 0 2px rgba(201, 165, 66, 0.78), 0 12px 28px rgba(17, 54, 80, 0.2);
+    animation: loginLogoPulse 1500ms ease-in-out infinite;
+}
+
+.login-loading-ring {
+    position: absolute;
+    inset: 4px;
+    border: 3px solid rgba(38, 141, 240, 0.18);
+    border-top-color: #268df0;
+    border-right-color: #16b9c3;
+    border-radius: 50%;
+    animation: loginRingSpin 1100ms linear infinite;
+}
+
+.login-loading-ring.is-second {
+    inset: 17px;
+    border-color: rgba(246, 184, 0, 0.18);
+    border-bottom-color: #f6b800;
+    border-left-color: #c71922;
+    animation-duration: 1500ms;
+    animation-direction: reverse;
+}
+
+.login-loading-panel strong {
+    color: #16243a;
+    font-size: 20px;
+    line-height: 1.2;
+    font-weight: 900;
+}
+
+.login-loading-panel p {
+    margin: -4px 0 0;
+    color: #596579;
+    font-size: 13px;
+    line-height: 1.4;
+    font-weight: 700;
+    text-align: center;
+}
+
+.login-loading-bar {
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(180, 202, 222, 0.42);
+    box-shadow: inset 0 1px 2px rgba(17, 54, 80, 0.12);
+}
+
+.login-loading-bar span {
+    width: 44%;
+    height: 100%;
+    display: block;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #0646ad, #268df0, #16b9c3, #f6b800);
+    animation: loginLoadingSweep 1200ms ease-in-out infinite;
+}
+
+@keyframes loginRingSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes loginLogoPulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.04);
+    }
+}
+
+@keyframes loginLoadingSweep {
+    0% {
+        transform: translateX(-110%);
+    }
+
+    55%,
+    100% {
+        transform: translateX(230%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .login-loading-emblem img,
+    .login-loading-ring,
+    .login-loading-bar span {
+        animation-duration: 1ms;
+        animation-iteration-count: 1;
+    }
+}
+
 .app-footer {
     min-height: 68px;
     position: relative;
@@ -599,6 +747,20 @@ svg {
     border: 1px solid #d9e0e9;
 }
 
+.menu-toggle {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 8px;
+    background: #fff;
+    color: #1f2d44;
+}
+
+.menu-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
 body.sidebar-collapsed .user-layout {
     padding-left: 0;
 }
@@ -628,7 +790,7 @@ body.sidebar-collapsed .user-sidebar {
 }
 
 .user-topbar {
-    min-height: 88px;
+    min-height: 64px;
     position: sticky;
     top: 0;
     z-index: 25;
@@ -645,16 +807,16 @@ body.sidebar-collapsed .user-sidebar {
 .topbar-left {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
     min-width: 0;
 }
 
 .topbar-left h1 {
     margin: 0;
     color: #1889f7;
-    font-size: 20px;
+    font-size: 22px;
     line-height: 1.2;
-    font-weight: 800;
+    font-weight: 900;
 }
 
 .topbar-actions {
@@ -663,56 +825,13 @@ body.sidebar-collapsed .user-sidebar {
     gap: 22px;
 }
 
-.search-field {
-    width: 258px;
-    min-height: 38px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 12px;
-    border: 1px solid #d8e0ea;
-    border-radius: 8px;
-    background: #fff;
-    color: #536177;
-}
-
-.search-field svg {
-    width: 18px;
-    height: 18px;
-}
-
-.search-field input {
-    width: 100%;
-    min-width: 0;
-    border: 0;
-    outline: 0;
-    color: var(--text);
-}
-
-.notify-button {
-    position: relative;
-}
-
-.notification-dot {
-    width: 8px;
-    height: 8px;
-    position: absolute;
-    top: 8px;
-    right: 9px;
-    border-radius: 999px;
-    background: #ef3651;
-}
-
-.profile-divider {
-    width: 1px;
-    height: 36px;
-    background: #edf1f5;
-}
-
 .user-profile {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
+    min-height: 42px;
+    padding-left: 24px;
+    border-left: 1px solid #edf1f5;
 }
 
 .user-profile div {
@@ -730,18 +849,19 @@ body.sidebar-collapsed .user-sidebar {
 }
 
 .user-profile strong {
-    font-size: 14px;
-    font-weight: 800;
+    color: #111827;
+    font-size: 15px;
+    font-weight: 900;
 }
 
 .user-profile span {
     color: #596579;
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .avatar-button {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     display: inline-grid;
     place-items: center;
     border: 0;
@@ -752,8 +872,8 @@ body.sidebar-collapsed .user-sidebar {
 }
 
 .avatar-button svg {
-    width: 19px;
-    height: 19px;
+    width: 20px;
+    height: 20px;
 }
 
 .dashboard-main {
@@ -1491,6 +1611,61 @@ body.sidebar-collapsed .user-sidebar {
     text-align: right;
 }
 
+.form-section-title > div {
+    display: grid;
+    gap: 6px;
+}
+
+.form-section-title > div p {
+    text-align: left;
+}
+
+.section-toggle-button {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    padding: 0 14px;
+    border: 1px solid #dbe2eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #1889f7;
+    font-size: 12px;
+    font-weight: 850;
+    cursor: pointer;
+    transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.section-toggle-button:hover,
+.section-toggle-button:focus-visible {
+    border-color: #b9dcff;
+    background: #f2f8ff;
+    color: #125ca8;
+}
+
+.section-toggle-button svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 180ms ease;
+}
+
+.case-party-section:not(.is-collapsed) .section-toggle-button svg {
+    transform: rotate(180deg);
+}
+
+.collapsible-section-body {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 240ms ease, opacity 180ms ease;
+}
+
+.case-party-section:not(.is-collapsed) .collapsible-section-body {
+    opacity: 1;
+}
+
 .section-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1833,10 +2008,6 @@ body.sidebar-collapsed .user-sidebar {
     .quick-grid {
         grid-template-columns: 1fr;
     }
-
-    .search-field {
-        width: 220px;
-    }
 }
 
 @media (max-width: 900px) {
@@ -1928,8 +2099,7 @@ body.sidebar-collapsed .user-sidebar {
         gap: 12px;
     }
 
-    .user-profile div,
-    .profile-divider {
+    .user-profile div {
         display: none;
     }
 
@@ -1997,10 +2167,6 @@ body.sidebar-collapsed .user-sidebar {
         font-size: 18px;
     }
 
-    .search-field {
-        display: none;
-    }
-
     .welcome-banner {
         min-height: 150px;
         padding: 28px;
@@ -2049,6 +2215,10 @@ body.sidebar-collapsed .user-sidebar {
     .form-section-title {
         flex-direction: column;
         gap: 8px;
+    }
+
+    .section-toggle-button {
+        width: 100%;
     }
 
     .form-section-title p {

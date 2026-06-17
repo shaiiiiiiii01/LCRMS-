@@ -15,24 +15,6 @@ $userRole = $userRole ?? ($_SESSION['role'] ?? (isset($_SESSION['account_role'])
     </div>
 
     <div class="topbar-actions">
-        <label class="search-field">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"></circle>
-                <path d="M20 20l-3.5-3.5"></path>
-            </svg>
-            <input type="search" placeholder="Search records..." aria-label="Search records">
-        </label>
-
-        <button class="icon-button notify-button" type="button" aria-label="Notifications">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
-                <path d="M13.7 21a2 2 0 0 1-3.4 0"></path>
-            </svg>
-            <span class="notification-dot"></span>
-        </button>
-
-        <div class="profile-divider"></div>
-
         <div class="user-profile" aria-label="Current user">
             <div>
                 <strong><?php echo htmlspecialchars($userName); ?></strong>

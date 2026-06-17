@@ -99,16 +99,27 @@ CREATE TABLE IF NOT EXISTS `cases` (
   `nature_of_case` varchar(100) NOT NULL DEFAULT '',
   `date_filed` date NOT NULL,
   `initial_confrontion_page` date DEFAULT NULL,
-  `status` varchar(50) NOT NULL DEFAULT 'CFA (Call for Action)',
+  `status` varchar(50) NOT NULL DEFAULT 'CFA (Certificate of File Action)',
   `settlement_date` date DEFAULT NULL,
   `execution_date` date DEFAULT NULL,
   `case_description` text,
   `complainant_title` varchar(255) NOT NULL DEFAULT '',
   `date_initial_confrontation` date DEFAULT NULL,
-  `case_status` varchar(50) NOT NULL DEFAULT 'CFA (Call for Action)',
+  `case_status` varchar(50) NOT NULL DEFAULT 'CFA (Certificate of File Action)',
   `date_settlement_award` date DEFAULT NULL,
   `date_execution` date DEFAULT NULL,
   `detailed_case_description` text,
+  `complainant_full_name` varchar(255) NOT NULL DEFAULT '',
+  `complainant_address` text,
+  `complainant_status` varchar(100) NOT NULL DEFAULT '',
+  `complainant_religion` varchar(100) NOT NULL DEFAULT '',
+  `complainant_birthdate` date DEFAULT NULL,
+  `complainant_age` int unsigned DEFAULT NULL,
+  `complainant_government_id` varchar(150) NOT NULL DEFAULT '',
+  `complainant_contact_number` varchar(50) NOT NULL DEFAULT '',
+  `respondent_full_name` varchar(255) NOT NULL DEFAULT '',
+  `respondent_address` text,
+  `respondent_contact_number` varchar(50) NOT NULL DEFAULT '',
   `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by_user_id` int unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`case_id`),
@@ -119,15 +130,15 @@ CREATE TABLE IF NOT EXISTS `cases` (
 
 -- Dumping data for table lcrms.cases: ~3 rows (approximately)
 DELETE FROM `cases`;
-INSERT INTO `cases` (`case_id`, `main_point_of_agreement`, `created_by`, `created_at`, `updated_at`, `case_number`, `case_title`, `compliant_name`, `nature_of_case`, `date_filed`, `initial_confrontion_page`, `status`, `settlement_date`, `execution_date`, `case_description`, `complainant_title`, `date_initial_confrontation`, `case_status`, `date_settlement_award`, `date_execution`, `detailed_case_description`, `date_created`, `created_by_user_id`) VALUES
-	(1, '', 'JOYCE OLONAN', '2026-06-09 21:34:18', NULL, 'L-2026-0001', 'DEBUG TEST CASE VS SAMPLE RESPONDENT', '', 'Civil', '2026-06-09', NULL, 'CFA (Call for Action)', NULL, NULL, NULL, 'Debug Complainant', NULL, 'CFA (Call for Action)', NULL, NULL, 'Temporary diagnostic record created to verify Add Case backend persistence.', '2026-06-09 13:34:18', 0),
-	(2, '', 'JOYCE OLONAN', '2026-06-09 21:36:39', NULL, 'L-2026-0002', 'API TEST CASE VS SAMPLE RESPONDENT', '', 'Civil', '2026-06-09', NULL, 'CFA (Call for Action)', NULL, NULL, NULL, 'API Complainant', NULL, 'CFA (Call for Action)', NULL, NULL, 'Temporary API diagnostic record created to verify cases_api.php, controller, session, model, database insert, and activity logging.', '2026-06-09 13:36:39', 0),
-	(3, '', 'JOYCE OLONAN', '2026-06-09 21:46:17', NULL, 'L-2026-0003', 'ELSA VS. PEPITO MANALOTO', '', 'Civil', '2026-06-09', NULL, 'CFA (Call for Action)', NULL, NULL, NULL, 'Utang', NULL, 'CFA (Call for Action)', NULL, NULL, 'Ayaw magbayad utang eh', '2026-06-09 13:46:17', 0),
-	(4, '', 'JOYCE OLONAN', '2026-06-10 08:33:47', NULL, 'L-2026-0004', 'PINO VS. DARCY', '', 'Civil', '2026-06-10', NULL, 'CFA (Call for Action)', NULL, NULL, NULL, 'Mobile legendz bang bang', NULL, 'CFA (Call for Action)', NULL, NULL, 'trashtalker sa ml, report report dark system', '2026-06-10 00:33:47', 15),
-	(5, '', 'JOYCE OLONAN', '2026-06-10 08:40:03', NULL, 'L-2026-0005', 'JOSEPH AQUINO VS. EDWARD LOCSIN', '', 'Civil', '2026-06-10', NULL, 'CFA (Call for Action)', NULL, NULL, NULL, 'Ashley tignan mo ako', NULL, 'CFA (Call for Action)', NULL, NULL, 'inagaw ni joseph si ashley', '2026-06-10 00:40:03', 15),
-	(6, '', 'JOYCE OLONAN', '2026-06-10 08:41:24', NULL, 'L-2026-0006', 'ERLINDA VS. SIR REY', '', 'Civil', '2026-06-10', NULL, 'CFA (Call for Action)', NULL, NULL, NULL, 'clearance', NULL, 'CFA (Call for Action)', NULL, NULL, 'ayaw pumirma ng clearance', '2026-06-10 00:41:24', 15),
-	(7, '', 'JOYCE OLONAN', '2026-06-10 08:42:06', NULL, 'L-2026-0007', 'JOSHUA GARCIA VS. MARIA', '', 'Civil', '2026-06-10', NULL, 'CFA (Call for Action)', NULL, NULL, NULL, 'Loan', NULL, 'CFA (Call for Action)', NULL, NULL, 'vnjknnvxjnj', '2026-06-10 00:42:06', 15),
-	(8, '', 'JOYCE OLONAN', '2026-06-10 08:49:47', NULL, 'L-2026-0008', 'SHAII VS. CY', '', 'Civil', '2026-06-10', NULL, 'CFA (Call for Action)', NULL, NULL, NULL, 'HOTDOG', '2026-06-10', 'Conciliation', '2026-06-10', '2026-06-10', 'ggggg', '2026-06-10 00:49:47', 15);
+INSERT INTO `cases` (`case_id`, `main_point_of_agreement`, `created_by`, `created_at`, `updated_at`, `case_number`, `case_title`, `compliant_name`, `nature_of_case`, `date_filed`, `initial_confrontion_page`, `status`, `settlement_date`, `execution_date`, `case_description`, `complainant_title`, `date_initial_confrontation`, `case_status`, `date_settlement_award`, `date_execution`, `detailed_case_description`, `complainant_full_name`, `complainant_address`, `complainant_status`, `complainant_religion`, `complainant_birthdate`, `complainant_age`, `complainant_government_id`, `complainant_contact_number`, `respondent_full_name`, `respondent_address`, `respondent_contact_number`, `date_created`, `created_by_user_id`) VALUES
+	(1, '', 'JOYCE OLONAN', '2026-06-09 21:34:18', NULL, 'L-2026-0001', 'DEBUG TEST CASE VS SAMPLE RESPONDENT', '', 'Civil', '2026-06-09', NULL, 'CFA (Certificate of File Action)', NULL, NULL, NULL, 'Debug Complainant', NULL, 'CFA (Certificate of File Action)', NULL, NULL, 'Temporary diagnostic record created to verify Add Case backend persistence.', '', NULL, '', '', NULL, NULL, '', '', '', NULL, '', '2026-06-09 13:34:18', 0),
+	(2, '', 'JOYCE OLONAN', '2026-06-09 21:36:39', NULL, 'L-2026-0002', 'API TEST CASE VS SAMPLE RESPONDENT', '', 'Civil', '2026-06-09', NULL, 'CFA (Certificate of File Action)', NULL, NULL, NULL, 'API Complainant', NULL, 'CFA (Certificate of File Action)', NULL, NULL, 'Temporary API diagnostic record created to verify cases_api.php, controller, session, model, database insert, and activity logging.', '', NULL, '', '', NULL, NULL, '', '', '', NULL, '', '2026-06-09 13:36:39', 0),
+	(3, '', 'JOYCE OLONAN', '2026-06-09 21:46:17', NULL, 'L-2026-0003', 'ELSA VS. PEPITO MANALOTO', '', 'Civil', '2026-06-09', NULL, 'CFA (Certificate of File Action)', NULL, NULL, NULL, 'Utang', NULL, 'CFA (Certificate of File Action)', NULL, NULL, 'Ayaw magbayad utang eh', '', NULL, '', '', NULL, NULL, '', '', '', NULL, '', '2026-06-09 13:46:17', 0),
+	(4, '', 'JOYCE OLONAN', '2026-06-10 08:33:47', NULL, 'L-2026-0004', 'PINO VS. DARCY', '', 'Civil', '2026-06-10', NULL, 'CFA (Certificate of File Action)', NULL, NULL, NULL, 'Mobile legendz bang bang', NULL, 'CFA (Certificate of File Action)', NULL, NULL, 'trashtalker sa ml, report report dark system', '', NULL, '', '', NULL, NULL, '', '', '', NULL, '', '2026-06-10 00:33:47', 15),
+	(5, '', 'JOYCE OLONAN', '2026-06-10 08:40:03', NULL, 'L-2026-0005', 'JOSEPH AQUINO VS. EDWARD LOCSIN', '', 'Civil', '2026-06-10', NULL, 'CFA (Certificate of File Action)', NULL, NULL, NULL, 'Ashley tignan mo ako', NULL, 'CFA (Certificate of File Action)', NULL, NULL, 'inagaw ni joseph si ashley', '', NULL, '', '', NULL, NULL, '', '', '', NULL, '', '2026-06-10 00:40:03', 15),
+	(6, '', 'JOYCE OLONAN', '2026-06-10 08:41:24', NULL, 'L-2026-0006', 'ERLINDA VS. SIR REY', '', 'Civil', '2026-06-10', NULL, 'CFA (Certificate of File Action)', NULL, NULL, NULL, 'clearance', NULL, 'CFA (Certificate of File Action)', NULL, NULL, 'ayaw pumirma ng clearance', '', NULL, '', '', NULL, NULL, '', '', '', NULL, '', '2026-06-10 00:41:24', 15),
+	(7, '', 'JOYCE OLONAN', '2026-06-10 08:42:06', NULL, 'L-2026-0007', 'JOSHUA GARCIA VS. MARIA', '', 'Civil', '2026-06-10', NULL, 'CFA (Certificate of File Action)', NULL, NULL, NULL, 'Loan', NULL, 'CFA (Certificate of File Action)', NULL, NULL, 'vnjknnvxjnj', '', NULL, '', '', NULL, NULL, '', '', '', NULL, '', '2026-06-10 00:42:06', 15),
+	(8, '', 'JOYCE OLONAN', '2026-06-10 08:49:47', NULL, 'L-2026-0008', 'SHAII VS. CY', '', 'Civil', '2026-06-10', NULL, 'CFA (Certificate of File Action)', NULL, NULL, NULL, 'HOTDOG', '2026-06-10', 'Conciliation', '2026-06-10', '2026-06-10', 'ggggg', '', NULL, '', '', NULL, NULL, '', '', '', NULL, '', '2026-06-10 00:49:47', 15);
 
 -- Dumping structure for table lcrms.users
 CREATE TABLE IF NOT EXISTS `users` (

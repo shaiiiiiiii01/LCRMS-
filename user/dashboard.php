@@ -52,6 +52,16 @@ function dashboard_entry_status_class(string $status): string
 
     return 'status-c';
 }
+
+function dashboard_entry_status_label(string $status): string
+{
+    $normalized = strtolower(trim($status));
+
+    return match ($normalized) {
+        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action', 'cfa (certificate of file action)', 'certificate of file action' => 'CFA (Certificate of File Action)',
+        default => $status,
+    };
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -59,7 +69,7 @@ function dashboard_entry_status_class(string $status): string
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | LCRMS</title>
-    <link rel="stylesheet" href="../assets/css/user.css">
+    <link rel="stylesheet" href="../assets/css/user.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/user.css'); ?>">
 </head>
 <body class="user-dashboard-page">
     <div class="user-layout">
@@ -146,7 +156,7 @@ function dashboard_entry_status_class(string $status): string
                                             <td><?php echo htmlspecialchars((string) $case['case_title']); ?></td>
                                             <td><?php echo htmlspecialchars((string) $case['complainant_title']); ?></td>
                                             <td><?php echo htmlspecialchars((string) ($case['nature_of_case'] ?? '')); ?></td>
-                                            <td><span class="status-pill <?php echo dashboard_entry_status_class((string) $case['case_status']); ?>"><?php echo htmlspecialchars((string) $case['case_status']); ?></span></td>
+                                            <td><span class="status-pill <?php echo dashboard_entry_status_class((string) $case['case_status']); ?>"><?php echo htmlspecialchars(dashboard_entry_status_label((string) $case['case_status'])); ?></span></td>
                                             <td><?php echo htmlspecialchars(dashboard_entry_date_label($case['date_filed'] ?? null)); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -161,7 +171,7 @@ function dashboard_entry_status_class(string $status): string
         </div>
     </div>
 
-    <script src="../assets/js/user.js"></script>
+    <script src="../assets/js/user.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/user.js'); ?>"></script>
 </body>
 </html>
 

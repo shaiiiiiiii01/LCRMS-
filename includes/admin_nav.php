@@ -1,8 +1,6 @@
 <?php
 $adminActive = $adminActive ?? '';
 $assetBase = $assetBase ?? '../';
-$adminNavUsername = $_SESSION['fullname'] ?? $_SESSION['admin_fullname'] ?? $_SESSION['username'] ?? 'Admin';
-$adminNavRole = $_SESSION['role'] ?? 'Admin';
 
 $adminNavItems = [
     [
@@ -42,20 +40,7 @@ $adminNavItems = [
         <?php endforeach; ?>
     </nav>
 
-    <div class="admin-sidebar-account" aria-label="Signed in administrator">
-        <span class="admin-sidebar-account-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20 21a8 8 0 0 0-16 0"></path>
-                <circle cx="12" cy="8" r="4"></circle>
-            </svg>
-        </span>
-        <div>
-            <strong><?php echo htmlspecialchars($adminNavUsername); ?></strong>
-            <span><?php echo htmlspecialchars($adminNavRole); ?></span>
-        </div>
-    </div>
-
-    <a class="admin-sidebar-link admin-sidebar-logout" href="logout.php">
+    <a class="admin-sidebar-link admin-sidebar-logout" href="logout.php" style="margin: auto 32px 0;" data-logout-link>
         <span class="admin-sidebar-icon">
             <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -66,3 +51,16 @@ $adminNavItems = [
         <span>Logout</span>
     </a>
 </aside>
+
+<div class="login-loading-screen" data-logout-loading aria-live="polite" aria-hidden="true">
+    <div class="login-loading-panel" role="status">
+        <div class="login-loading-emblem" aria-hidden="true">
+            <span class="login-loading-ring"></span>
+            <span class="login-loading-ring is-second"></span>
+            <img src="<?php echo $assetBase; ?>assets/images/oldcab_logo.png" alt="">
+        </div>
+        <strong>Signing you out</strong>
+        <p>Closing your LCRMS session...</p>
+        <div class="login-loading-bar" aria-hidden="true"><span></span></div>
+    </div>
+</div>

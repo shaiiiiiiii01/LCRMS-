@@ -42,7 +42,7 @@ $navItems = [
         <?php endforeach; ?>
     </nav>
 
-    <a class="sidebar-link sidebar-logout" href="logout.php">
+    <a class="sidebar-link sidebar-logout" href="logout.php" data-logout-link>
         <span class="sidebar-icon">
             <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -54,3 +54,15 @@ $navItems = [
     </a>
 </aside>
 
+<div class="login-loading-screen" data-logout-loading aria-live="polite" aria-hidden="true">
+    <div class="login-loading-panel" role="status">
+        <div class="login-loading-emblem" aria-hidden="true">
+            <span class="login-loading-ring"></span>
+            <span class="login-loading-ring is-second"></span>
+            <img src="<?php echo $assetBase; ?>assets/images/oldcab_logo.png" alt="">
+        </div>
+        <strong>Signing you out</strong>
+        <p>Closing your LCRMS session...</p>
+        <div class="login-loading-bar" aria-hidden="true"><span></span></div>
+    </div>
+</div>

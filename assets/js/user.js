@@ -18,6 +18,17 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    document.querySelectorAll("[data-logout-link]").forEach((logoutLink) => {
+        logoutLink.addEventListener("click", () => {
+            const logoutLoading = document.querySelector("[data-logout-loading]");
+
+            if (logoutLoading) {
+                logoutLoading.setAttribute("aria-hidden", "false");
+                document.body.classList.add("is-session-loading");
+            }
+        });
+    });
+
     document.querySelectorAll("[data-sidebar-toggle]").forEach((button) => {
         button.addEventListener("click", () => {
             if (window.matchMedia("(max-width: 900px)").matches) {
@@ -91,6 +102,17 @@ document.addEventListener("DOMContentLoaded", () => {
         nature_of_case: "Nature of Case",
         date_filed: "Date Filed",
         detailed_case_description: "Detailed Case Description",
+        complainant_full_name: "Complainant Full Name",
+        complainant_address: "Complainant Address",
+        complainant_status: "Complainant Status",
+        complainant_religion: "Complainant Religion",
+        complainant_birthdate: "Complainant Birthdate",
+        complainant_age: "Complainant Age",
+        complainant_government_id: "Complainant Government ID",
+        complainant_contact_number: "Complainant Contact Number",
+        respondent_full_name: "Respondent Full Name",
+        respondent_address: "Respondent Address",
+        respondent_contact_number: "Respondent Contact Number",
     };
 
     const requiredCaseFields = Object.keys(caseFieldLabels);
@@ -244,8 +266,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const value = String(status || "").trim();
         const lower = value.toLowerCase();
 
-        if (lower === "cfa" || lower === "cfa (call for action)" || lower === "call for action" || lower === "cfa (certificate to file action)" || lower === "certificate to file action") {
-            return "CFA (Certificate to File Action)";
+        if (lower === "cfa" || lower === "cfa (call for action)" || lower === "call for action" || lower === "cfa (certificate to file action)" || lower === "certificate to file action" || lower === "cfa (certificate of file action)" || lower === "certificate of file action") {
+            return "CFA (Certificate of File Action)";
         }
 
         if (lower === "m" || lower === "mediation") {
@@ -269,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const statusChoices = [
             { value: "Mediation", label: "Mediation" },
             { value: "Conciliation", label: "Conciliation" },
-            { value: "CFA (Certificate to File Action)", label: "CFA (Certificate to File Action)" },
+            { value: "CFA (Certificate of File Action)", label: "CFA (Certificate of File Action)" },
             { value: "Endorsed", label: "Endorsed" },
             { value: "Dismissed", label: "Dismissed" },
         ];
@@ -314,6 +336,29 @@ document.addEventListener("DOMContentLoaded", () => {
                     createCaseDetailField("Main Point of Agreement", caseData.main_point_of_agreement, { type: "textarea", wide: true }),
                 ],
                 "section-grid narrative-grid"
+            ),
+            createCaseDetailSection(
+                "Complainant Information",
+                "Additional personal details for the complainant record.",
+                [
+                    createCaseDetailField("Full Name", caseData.complainant_full_name),
+                    createCaseDetailField("Address", caseData.complainant_address, { wide: true }),
+                    createCaseDetailField("Status", caseData.complainant_status),
+                    createCaseDetailField("Religion", caseData.complainant_religion),
+                    createCaseDetailField("Birthdate", caseData.complainant_birthdate),
+                    createCaseDetailField("Age", caseData.complainant_age),
+                    createCaseDetailField("Government ID", caseData.complainant_government_id),
+                    createCaseDetailField("Contact Number", caseData.complainant_contact_number),
+                ]
+            ),
+            createCaseDetailSection(
+                "Respondent Information",
+                "Additional contact details for the respondent record.",
+                [
+                    createCaseDetailField("Full Name", caseData.respondent_full_name),
+                    createCaseDetailField("Contact Number", caseData.respondent_contact_number),
+                    createCaseDetailField("Address", caseData.respondent_address, { wide: true }),
+                ]
             )
         );
 
@@ -447,6 +492,52 @@ document.addEventListener("DOMContentLoaded", () => {
         return field.closest(".date-field");
     };
 
+    const setCaseCollapsibleExpanded = (section, expanded) => {
+        const toggle = section?.querySelector("[data-case-collapsible-toggle]");
+        const body = section?.querySelector("[data-case-collapsible-body]");
+
+        if (!section || !toggle || !body) {
+            return;
+        }
+
+        section.classList.toggle("is-collapsed", !expanded);
+        toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+        toggle.querySelector("span").textContent = expanded ? "Hide fields" : "Show fields";
+        body.setAttribute("aria-hidden", expanded ? "false" : "true");
+        body.style.maxHeight = expanded ? `${body.scrollHeight}px` : "0px";
+    };
+
+    const expandCaseCollapsibleForField = (field) => {
+        const firstField = isRadioGroupField(field) ? Array.from(field)[0] : field;
+        const section = firstField?.closest("[data-case-collapsible]");
+
+        if (section) {
+            setCaseCollapsibleExpanded(section, true);
+        }
+    };
+
+    const calculateAgeFromBirthdate = (birthdate) => {
+        if (!birthdate) {
+            return "";
+        }
+
+        const birth = new Date(`${birthdate}T00:00:00`);
+        const today = new Date();
+
+        if (Number.isNaN(birth.getTime()) || birth > today) {
+            return "";
+        }
+
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDelta = today.getMonth() - birth.getMonth();
+
+        if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birth.getDate())) {
+            age -= 1;
+        }
+
+        return age >= 0 ? String(age) : "";
+    };
+
     const ensureCaseFieldMessage = (field) => {
         const group = getCaseFieldGroup(field);
         const name = getCaseFieldName(field);
@@ -536,7 +627,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const normalizeCaseStatusKey = (status) => {
         const value = String(status || "").trim().toLowerCase();
 
-        if (value === "cfa" || value === "cfa (call for action)" || value === "call for action" || value === "cfa (certificate to file action)" || value === "certificate to file action") {
+        if (value === "cfa" || value === "cfa (call for action)" || value === "call for action" || value === "cfa (certificate to file action)" || value === "certificate to file action" || value === "cfa (certificate of file action)" || value === "certificate of file action") {
             return "cfa";
         }
 
@@ -556,6 +647,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         errorsByName.set(name, message);
         setCaseFieldError(field, message);
+        expandCaseCollapsibleForField(field);
     };
 
     const getCaseFormValue = (form, name) => getCaseFieldValue(form.elements[name]).trim();
@@ -584,12 +676,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const executionDate = getCaseFormValue(form, "date_execution");
         const agreement = getCaseFormValue(form, "main_point_of_agreement");
         const status = normalizeCaseStatusKey(getCaseFormValue(form, "case_status"));
+        const complainantBirthdate = getCaseFormValue(form, "complainant_birthdate");
+        const calculatedComplainantAge = calculateAgeFromBirthdate(complainantBirthdate);
+
+        if (form.elements.complainant_age && calculatedComplainantAge !== "") {
+            form.elements.complainant_age.value = calculatedComplainantAge;
+        }
 
         requiredCaseFields.forEach((name) => {
             if (getCaseFormValue(form, name) === "") {
                 addCaseValidationError(form, errorsByName, name, `${caseFieldLabels[name]} is required.`);
             }
         });
+
+        if (complainantBirthdate && calculatedComplainantAge === "") {
+            addCaseValidationError(form, errorsByName, "complainant_birthdate", "Complainant Birthdate must be a valid past date.");
+        }
 
         if (initialConfrontation && !dateFiled) {
             addCaseValidationError(form, errorsByName, "date_initial_confrontation", "Please enter Date Filed first.");
@@ -713,6 +815,29 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-case-form]").forEach((form) => {
         form.setAttribute("novalidate", "novalidate");
 
+        form.querySelectorAll("[data-case-collapsible]").forEach((section) => {
+            const toggle = section.querySelector("[data-case-collapsible-toggle]");
+
+            setCaseCollapsibleExpanded(section, false);
+
+            toggle?.addEventListener("click", () => {
+                setCaseCollapsibleExpanded(section, section.classList.contains("is-collapsed"));
+            });
+        });
+
+        form.querySelectorAll("[data-age-source]").forEach((birthdateField) => {
+            const ageField = form.elements[birthdateField.dataset.ageSource];
+            const updateAge = () => {
+                if (ageField) {
+                    ageField.value = calculateAgeFromBirthdate(birthdateField.value);
+                }
+            };
+
+            birthdateField.addEventListener("input", updateAge);
+            birthdateField.addEventListener("change", updateAge);
+            updateAge();
+        });
+
         requiredCaseFields.forEach((name) => {
             const field = form.elements[name];
 
@@ -776,6 +901,16 @@ document.addEventListener("DOMContentLoaded", () => {
         form.addEventListener("reset", () => {
             window.setTimeout(() => {
                 clearCaseFieldErrors(form);
+                form.querySelectorAll("[data-age-source]").forEach((birthdateField) => {
+                    const ageField = form.elements[birthdateField.dataset.ageSource];
+
+                    if (ageField) {
+                        ageField.value = "";
+                    }
+                });
+                form.querySelectorAll("[data-case-collapsible]").forEach((section) => {
+                    setCaseCollapsibleExpanded(section, false);
+                });
                 updateCaseDateFieldAvailability(form);
             }, 0);
         });

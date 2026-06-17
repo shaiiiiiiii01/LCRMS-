@@ -13,7 +13,7 @@ function lcrms_case_docx_status(?string $status): string
     $status = trim((string) ($status ?? ''));
 
     return match (strtolower($status)) {
-        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action' => 'CFA (Certificate to File Action)',
+        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action', 'cfa (certificate of file action)', 'certificate of file action' => 'CFA (Certificate of File Action)',
         'm', 'mediation' => 'Mediation',
         'c', 'conciliation', 'for conciliation stage' => 'Conciliation',
         default => $status,
@@ -75,6 +75,25 @@ function lcrms_case_docx_document_xml(array $case): string
         ['Case Title', lcrms_case_docx_text($case['case_title'] ?? '')],
         ['Complainant Title', lcrms_case_docx_text($case['complainant_title'] ?? '')],
         ['Nature of Case', lcrms_case_docx_text($case['nature_of_case'] ?? '')],
+    ]);
+    $xml .= lcrms_case_docx_paragraph('', '');
+    $xml .= lcrms_case_docx_paragraph('Complainant Information', 'Heading1');
+    $xml .= lcrms_case_docx_table([
+        ['Full Name', lcrms_case_docx_text($case['complainant_full_name'] ?? '')],
+        ['Address', lcrms_case_docx_text($case['complainant_address'] ?? '')],
+        ['Status', lcrms_case_docx_text($case['complainant_status'] ?? '')],
+        ['Religion', lcrms_case_docx_text($case['complainant_religion'] ?? '')],
+        ['Birthdate', lcrms_case_docx_text($case['complainant_birthdate'] ?? '')],
+        ['Age', lcrms_case_docx_text((string) ($case['complainant_age'] ?? ''))],
+        ['Government ID', lcrms_case_docx_text($case['complainant_government_id'] ?? '')],
+        ['Contact Number', lcrms_case_docx_text($case['complainant_contact_number'] ?? '')],
+    ]);
+    $xml .= lcrms_case_docx_paragraph('', '');
+    $xml .= lcrms_case_docx_paragraph('Respondent Information', 'Heading1');
+    $xml .= lcrms_case_docx_table([
+        ['Full Name', lcrms_case_docx_text($case['respondent_full_name'] ?? '')],
+        ['Address', lcrms_case_docx_text($case['respondent_address'] ?? '')],
+        ['Contact Number', lcrms_case_docx_text($case['respondent_contact_number'] ?? '')],
     ]);
     $xml .= lcrms_case_docx_paragraph('', '');
     $xml .= lcrms_case_docx_paragraph('Schedule and Status', 'Heading1');

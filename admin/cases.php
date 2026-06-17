@@ -8,8 +8,6 @@ $adminActive = 'cases';
 $pageTitle = 'Case Management';
 $adminName = $_SESSION['fullname'] ?? $_SESSION['admin_fullname'] ?? $_SESSION['username'] ?? 'Admin';
 $adminRole = $_SESSION['role'] ?? 'Admin';
-$headerMode = 'breadcrumb';
-$footerStyle = 'compact';
 $assetBase = '../';
 $caseModel = new CaseModel(lcrms_db());
 $caseSearch = trim((string) ($_GET['search'] ?? ''));
@@ -72,7 +70,7 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
 
                     <a class="admin-stat-card dashboard-stat-card cases-filter-card accent-red<?php echo $caseStatus === 'cfa' ? ' is-active' : ''; ?>" href="cases.php?status=cfa#caseSearch" data-case-filter-card data-case-filter-status="cfa">
                         <div class="dashboard-stat-copy">
-                            <span class="dashboard-stat-title">Certificate to File Action (CFA)</span>
+                            <span class="dashboard-stat-title">Certificate of File Action (CFA)</span>
                             <strong><?php echo number_format($caseCounts['cfa'] ?? 0); ?></strong>
                             <p>Cases requiring action</p>
                         </div>
@@ -185,7 +183,7 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
                             <tbody>
                                 <?php if ($cases === []): ?>
                                     <tr>
-                                        <td colspan="7">No case records found.</td>
+                                        <td class="admin-cases-empty-cell" colspan="7">No case records found.</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($cases as $case): ?>
@@ -222,11 +220,6 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
                 </section>
 
                 <section class="admin-lower-actions">
-                    <a class="quick-action-card" href="../user/add_cases.php">
-                        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6M12 11v6M9 14h6"></path></svg></span>
-                        <div><small>Quick Action</small><strong>Create New Case Record</strong></div>
-                        <b>+</b>
-                    </a>
                     <article class="system-status-card">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path><path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.08 1.65V21a2 2 0 1 1-4 0v-.09A1.8 1.8 0 0 0 8.8 19.26a1.8 1.8 0 0 0-1.98.36l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.8 1.8 0 0 0 4.35 15a1.8 1.8 0 0 0-1.65-1.08H2.6a2 2 0 1 1 0-4h.09A1.8 1.8 0 0 0 4.35 8.8a1.8 1.8 0 0 0-.36-1.98l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.8 1.8 0 0 0 1.98.36h.01A1.8 1.8 0 0 0 9.9 2.7V2.6a2 2 0 1 1 4 0v.09a1.8 1.8 0 0 0 1.08 1.65 1.8 1.8 0 0 0 1.98-.36l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.8 1.8 0 0 0-.36 1.98v.01a1.8 1.8 0 0 0 1.65 1.08h.09a2 2 0 1 1 0 4h-.09A1.8 1.8 0 0 0 19.4 15z"></path></svg>
                         <div><small>System Status</small><strong>Database Backup: Healthy</strong></div>

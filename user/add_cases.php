@@ -22,7 +22,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Case | LCRMS</title>
-    <link rel="stylesheet" href="../assets/css/user.css">
+    <link rel="stylesheet" href="../assets/css/user.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/user.css'); ?>">
 </head>
 <body>
     <div class="user-layout">
@@ -78,7 +78,7 @@ try {
 
                                     <div class="form-group wide">
                                         <label for="caseTitle">Case Title</label>
-                                        <input id="caseTitle" name="case_title" type="text" placeholder="e.g., MARITES TOLENTINO VS. JOHN PAUL BROWN">
+                                        <input id="caseTitle" name="case_title" type="text" placeholder="COMPLIANT VS. RESPONDENT">
                                     </div>
 
                                     <div class="form-group">
@@ -137,7 +137,7 @@ try {
                                             <option value="" selected>Select case status</option>
                                             <option>Mediation</option>
                                             <option>Conciliation</option>
-                                            <option>CFA (Certificate to File Action)</option>
+                                            <option>CFA (Certificate of File Action)</option>
                                             <option>Endorsed</option>
                                             <option>Dismissed</option>
                                         </select>
@@ -185,6 +185,105 @@ try {
                                     </div>
                                 </div>
                             </section>
+
+                            <section class="form-section case-party-section is-collapsed" data-case-collapsible>
+                                <div class="form-section-title">
+                                    <div>
+                                        <h3>Complainant Information</h3>
+                                        <p>Additional personal details for the complainant record.</p>
+                                    </div>
+                                    <button class="section-toggle-button" type="button" data-case-collapsible-toggle aria-expanded="false" aria-controls="complainantInfoFields">
+                                        <span>Show fields</span>
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M6 9l6 6 6-6"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div id="complainantInfoFields" class="collapsible-section-body" data-case-collapsible-body aria-hidden="true">
+                                    <div class="section-grid">
+                                        <div class="form-group">
+                                            <label for="complainantFullName">Full Name</label>
+                                            <input id="complainantFullName" name="complainant_full_name" type="text" placeholder="Enter full name">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantStatus">Status</label>
+                                            <input id="complainantStatus" name="complainant_status" type="text" placeholder="e.g., Single, Married">
+                                        </div>
+
+                                        <div class="form-group wide">
+                                            <label for="complainantAddress">Address</label>
+                                            <input id="complainantAddress" name="complainant_address" type="text" placeholder="Enter complete address">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantReligion">Religion</label>
+                                            <input id="complainantReligion" name="complainant_religion" type="text" placeholder="Enter religion">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantBirthdate">Birthdate</label>
+                                            <div class="date-field">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                                                    <path d="M16 2v4M8 2v4M3 10h18"></path>
+                                                </svg>
+                                                <input id="complainantBirthdate" name="complainant_birthdate" type="date" data-age-source="complainant_age">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantAge">Age</label>
+                                            <input id="complainantAge" name="complainant_age" type="number" min="0" max="130" readonly placeholder="Auto-calculated">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantGovernmentId">Government ID</label>
+                                            <input id="complainantGovernmentId" name="complainant_government_id" type="text" placeholder="Enter ID details">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantContactNumber">Contact Number</label>
+                                            <input id="complainantContactNumber" name="complainant_contact_number" type="tel" placeholder="Enter contact number">
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="form-section case-party-section is-collapsed" data-case-collapsible>
+                                <div class="form-section-title">
+                                    <div>
+                                        <h3>Respondent Information</h3>
+                                        <p>Additional contact details for the respondent record.</p>
+                                    </div>
+                                    <button class="section-toggle-button" type="button" data-case-collapsible-toggle aria-expanded="false" aria-controls="respondentInfoFields">
+                                        <span>Show fields</span>
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M6 9l6 6 6-6"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div id="respondentInfoFields" class="collapsible-section-body" data-case-collapsible-body aria-hidden="true">
+                                    <div class="section-grid">
+                                        <div class="form-group">
+                                            <label for="respondentFullName">Full Name</label>
+                                            <input id="respondentFullName" name="respondent_full_name" type="text" placeholder="Enter full name">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="respondentContactNumber">Contact Number</label>
+                                            <input id="respondentContactNumber" name="respondent_contact_number" type="tel" placeholder="Enter contact number">
+                                        </div>
+
+                                        <div class="form-group wide">
+                                            <label for="respondentAddress">Address</label>
+                                            <input id="respondentAddress" name="respondent_address" type="text" placeholder="Enter complete address">
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
                         </div>
 
                         <div class="form-note">
@@ -208,7 +307,7 @@ try {
         </div>
     </div>
 
-    <script src="../assets/js/user.js"></script>
+    <script src="../assets/js/user.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/user.js'); ?>"></script>
 </body>
 </html>
 

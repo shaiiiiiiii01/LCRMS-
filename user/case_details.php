@@ -26,7 +26,7 @@ function detail_value(?string $value): string
 function detail_case_status_value(string $status): string
 {
     return match (strtolower(trim($status))) {
-        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action' => 'CFA (Certificate to File Action)',
+        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action', 'cfa (certificate of file action)', 'certificate of file action' => 'CFA (Certificate of File Action)',
         'm', 'mediation' => 'Mediation',
         'c', 'conciliation', 'for conciliation stage' => 'Conciliation',
         default => $status,
@@ -36,7 +36,7 @@ function detail_case_status_value(string $status): string
 $statusOptions = [
     'Mediation',
     'Conciliation',
-    'CFA (Certificate to File Action)',
+    'CFA (Certificate of File Action)',
     'Endorsed',
     'Dismissed',
 ];
@@ -55,7 +55,7 @@ if ($caseStatus !== '' && !in_array(strtolower(trim($rawCaseStatus)), $removedSt
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Case Details | LCRMS</title>
-    <link rel="stylesheet" href="../assets/css/user.css">
+    <link rel="stylesheet" href="../assets/css/user.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/user.css'); ?>">
 </head>
 <body>
     <div class="user-layout">
@@ -127,6 +127,79 @@ if ($caseStatus !== '' && !in_array(strtolower(trim($rawCaseStatus)), $removedSt
                                         <div class="form-group">
                                             <label for="natureOfCase">Nature of Case</label>
                                             <input id="natureOfCase" type="text" value="<?php echo detail_value($case['nature_of_case'] ?? ''); ?>" readonly>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section class="form-section">
+                                    <div class="form-section-title">
+                                        <h3>Complainant Information</h3>
+                                        <p>Additional personal details for the complainant record.</p>
+                                    </div>
+
+                                    <div class="section-grid">
+                                        <div class="form-group">
+                                            <label for="complainantFullName">Full Name</label>
+                                            <input id="complainantFullName" type="text" value="<?php echo detail_value($case['complainant_full_name'] ?? ''); ?>" readonly>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantStatus">Status</label>
+                                            <input id="complainantStatus" type="text" value="<?php echo detail_value($case['complainant_status'] ?? ''); ?>" readonly>
+                                        </div>
+
+                                        <div class="form-group wide">
+                                            <label for="complainantAddress">Address</label>
+                                            <input id="complainantAddress" type="text" value="<?php echo detail_value($case['complainant_address'] ?? ''); ?>" readonly>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantReligion">Religion</label>
+                                            <input id="complainantReligion" type="text" value="<?php echo detail_value($case['complainant_religion'] ?? ''); ?>" readonly>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantBirthdate">Birthdate</label>
+                                            <input id="complainantBirthdate" type="date" value="<?php echo detail_value($case['complainant_birthdate'] ?? ''); ?>" readonly>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantAge">Age</label>
+                                            <input id="complainantAge" type="text" value="<?php echo detail_value((string) ($case['complainant_age'] ?? '')); ?>" readonly>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantGovernmentId">Government ID</label>
+                                            <input id="complainantGovernmentId" type="text" value="<?php echo detail_value($case['complainant_government_id'] ?? ''); ?>" readonly>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantContactNumber">Contact Number</label>
+                                            <input id="complainantContactNumber" type="text" value="<?php echo detail_value($case['complainant_contact_number'] ?? ''); ?>" readonly>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section class="form-section">
+                                    <div class="form-section-title">
+                                        <h3>Respondent Information</h3>
+                                        <p>Additional contact details for the respondent record.</p>
+                                    </div>
+
+                                    <div class="section-grid">
+                                        <div class="form-group">
+                                            <label for="respondentFullName">Full Name</label>
+                                            <input id="respondentFullName" type="text" value="<?php echo detail_value($case['respondent_full_name'] ?? ''); ?>" readonly>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="respondentContactNumber">Contact Number</label>
+                                            <input id="respondentContactNumber" type="text" value="<?php echo detail_value($case['respondent_contact_number'] ?? ''); ?>" readonly>
+                                        </div>
+
+                                        <div class="form-group wide">
+                                            <label for="respondentAddress">Address</label>
+                                            <input id="respondentAddress" type="text" value="<?php echo detail_value($case['respondent_address'] ?? ''); ?>" readonly>
                                         </div>
                                     </div>
                                 </section>
@@ -231,7 +304,7 @@ if ($caseStatus !== '' && !in_array(strtolower(trim($rawCaseStatus)), $removedSt
         </div>
     </div>
 
-    <script src="../assets/js/user.js"></script>
+    <script src="../assets/js/user.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/user.js'); ?>"></script>
 </body>
 </html>
 

@@ -1,14 +1,18 @@
 <?php
 require_once __DIR__ . '/auth.php';
 require_admin_login();
+require_once __DIR__ . '/../db_connect.php';
+require_once __DIR__ . '/models/UserModel.php';
 
 $adminActive = 'settings';
 $pageTitle = 'Settings';
-$breadcrumbParent = 'Administration';
 $adminName = $_SESSION['fullname'] ?? $_SESSION['admin_fullname'] ?? $_SESSION['username'] ?? 'Admin';
 $adminRole = $_SESSION['role'] ?? 'Admin';
-$headerMode = 'breadcrumb';
 $assetBase = '../';
+$userModel = new UserModel($conn);
+$initialUsers = $userModel->list();
+$initialAdminProfile = $userModel->adminProfile((int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? $_SESSION['account_id'] ?? 0));
+$initialUsersJson = htmlspecialchars(json_encode($initialUsers, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +21,7 @@ $assetBase = '../';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings | LCRMS Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/admin.css'); ?>">
 </head>
 <body>
     <div class="admin-layout admin-settings-layout">
@@ -27,7 +31,7 @@ $assetBase = '../';
         <div class="admin-content">
             <?php include '../includes/admin_header.php'; ?>
 
-            <main class="admin-main users-main" data-user-management data-user-api="users_api.php">
+            <main class="admin-main users-main" data-user-management data-user-api="users_api.php" data-initial-users="<?php echo $initialUsersJson; ?>">
                 <div class="admin-toast" data-user-toast role="status" aria-live="polite" hidden></div>
 
                 <section class="admin-profile-card" aria-labelledby="adminProfileTitle">
@@ -47,15 +51,15 @@ $assetBase = '../';
                     <form class="settings-form admin-profile-form" action="#" method="post" data-admin-profile-form novalidate>
                         <div class="admin-form-group">
                             <label for="adminProfileFullname">Full Name</label>
-                            <input id="adminProfileFullname" type="text" autocomplete="name" data-admin-profile-fullname required>
+                            <input id="adminProfileFullname" type="text" autocomplete="name" value="<?php echo htmlspecialchars((string) ($initialAdminProfile['fullname'] ?? '')); ?>" data-admin-profile-fullname required readonly tabindex="-1">
                         </div>
                         <div class="admin-form-group">
                             <label for="adminProfileUsername">Username</label>
-                            <input id="adminProfileUsername" type="text" autocomplete="username" data-admin-profile-username required>
+                            <input id="adminProfileUsername" type="text" autocomplete="username" value="<?php echo htmlspecialchars((string) ($initialAdminProfile['username'] ?? '')); ?>" data-admin-profile-username required readonly tabindex="-1">
                         </div>
                         <div class="admin-form-group">
                             <label for="adminProfilePassword">Password</label>
-                            <input id="adminProfilePassword" type="text" autocomplete="new-password" data-admin-profile-password>
+                            <input id="adminProfilePassword" type="text" autocomplete="new-password" value="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" data-password-unchanged="true" data-admin-profile-password readonly tabindex="-1">
                         </div>
                         <p class="form-info-alert admin-password-note">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>
@@ -91,7 +95,7 @@ $assetBase = '../';
                         </button>
                     </div>
 
-                    <div class="user-table-frame" data-user-table-frame>
+                    <div class="user-table-frame" data-user-table-frame <?php echo $initialUsers === [] ? 'hidden' : ''; ?>>
                         <div class="admin-table-wrap user-table-wrap">
                             <table class="user-management-table">
                                 <thead>
@@ -101,12 +105,27 @@ $assetBase = '../';
                                         <th scope="col">Password</th>
                                     </tr>
                                 </thead>
-                                <tbody data-user-table-body></tbody>
+                                <tbody data-user-table-body>
+                                    <?php foreach ($initialUsers as $user): ?>
+                                        <tr class="user-management-row" data-user-row data-user-id="<?php echo htmlspecialchars((string) $user['id']); ?>" tabindex="0" role="button" aria-label="Edit <?php echo htmlspecialchars((string) $user['fullname']); ?>">
+                                            <td><?php echo htmlspecialchars((string) $user['fullname']); ?></td>
+                                            <td><?php echo htmlspecialchars((string) $user['username']); ?></td>
+                                            <td>
+                                                <div class="user-password-cell">
+                                                    <span class="password-mask" aria-label="Password hidden">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
+                                                    <button class="user-action-button edit" type="button" data-user-action="edit" data-user-id="<?php echo htmlspecialchars((string) $user['id']); ?>" aria-label="Edit <?php echo htmlspecialchars((string) $user['fullname']); ?>">
+                                                        <i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <div class="user-empty-state" data-user-empty-state hidden>
+                    <div class="user-empty-state" data-user-empty-state <?php echo $initialUsers === [] ? '' : 'hidden'; ?>>
                         <span><i class="fa-solid fa-user-plus" aria-hidden="true"></i></span>
                         <h3>No users found</h3>
                         <p>Try another name or add a new user account.</p>
@@ -183,9 +202,11 @@ $assetBase = '../';
                     </section>
                 </div>
             </main>
+
+            <?php include '../includes/admin_footer.php'; ?>
         </div>
     </div>
 
-    <script src="../assets/js/admin.js"></script>
+    <script src="../assets/js/admin.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/admin.js'); ?>"></script>
 </body>
 </html>

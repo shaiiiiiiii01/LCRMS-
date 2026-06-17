@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | LCRMS</title>
-    <link rel="stylesheet" href="assets/css/admin.css?v=4">
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
 </head>
 <body class="admin-login-page">
     <main class="admin-login-screen">
@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p class="admin-login-error" role="alert"><?php echo htmlspecialchars($error); ?></p>
             <?php endif; ?>
 
-            <form class="admin-login-form" action="login.php" method="post">
+            <form class="admin-login-form" action="login.php" method="post" data-login-form>
                 <div class="admin-form-group">
                     <label for="adminUsername">Username</label>
                     <div class="admin-input-shell">
@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </label>
                 </div>
 
-                <button class="admin-primary-button" type="submit">
+                <button class="admin-primary-button" type="submit" data-login-submit>
                     <span>Log In</span>
                 </button>
             </form>
@@ -179,6 +179,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <?php include __DIR__ . '/includes/admin_footer.php'; ?>
 
-    <script src="assets/js/admin.js"></script>
+    <div class="login-loading-screen" data-login-loading aria-live="polite" aria-hidden="true">
+        <div class="login-loading-panel" role="status">
+            <div class="login-loading-emblem" aria-hidden="true">
+                <span class="login-loading-ring"></span>
+                <span class="login-loading-ring is-second"></span>
+                <img src="assets/images/oldcab_logo.png" alt="">
+            </div>
+            <strong>Signing you in</strong>
+            <p>Preparing your LCRMS workspace...</p>
+            <div class="login-loading-bar" aria-hidden="true"><span></span></div>
+        </div>
+    </div>
+
+    <script src="assets/js/admin.js?v=<?php echo filemtime(__DIR__ . '/assets/js/admin.js'); ?>"></script>
 </body>
 </html>
