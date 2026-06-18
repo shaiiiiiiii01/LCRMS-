@@ -58,7 +58,9 @@ function dashboard_entry_status_label(string $status): string
     $normalized = strtolower(trim($status));
 
     return match ($normalized) {
-        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action', 'cfa (certificate of file action)', 'certificate of file action' => 'CFA (Certificate of File Action)',
+        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action', 'cfa (certificate of file action)', 'certificate of file action' => 'CFA',
+        'm', 'mediation' => 'M',
+        'c', 'conciliation', 'for conciliation stage' => 'C',
         default => $status,
     };
 }
@@ -82,8 +84,10 @@ function dashboard_entry_status_label(string $status): string
 
             <main class="dashboard-main">
                 <section class="welcome-banner">
-                    <h2>Good Day, <?php echo htmlspecialchars($userName); ?>!</h2>
-                    <p><?php echo htmlspecialchars($_SESSION['role'] ?? 'User'); ?> account</p>
+                    <div>
+                        <h2>Good Day, <?php echo htmlspecialchars($userName); ?>!</h2>
+                        <p><?php echo htmlspecialchars($_SESSION['role'] ?? 'User'); ?> account</p>
+                    </div>
                 </section>
 
                 <section class="quick-grid" aria-label="Dashboard shortcuts">

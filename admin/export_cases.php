@@ -99,7 +99,7 @@ foreach ($cases as $case) {
         (string) $case['nature_of_case'],
         admin_case_date_label($case['date_filed'] ?? null),
         admin_case_date_label($case['date_initial_confrontation'] ?? null),
-        (string) $case['case_status'],
+        admin_case_status_label((string) $case['case_status']),
         admin_case_date_label($case['date_settlement_award'] ?? null),
         admin_case_date_label($case['date_execution'] ?? null),
         (string) $case['detailed_case_description'],

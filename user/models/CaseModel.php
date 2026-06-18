@@ -122,7 +122,7 @@ class CaseModel
         $caseStatus = self::STATUS_MEDIATION;
 
         if ($submittedStatus !== '' && $submittedStatus !== self::STATUS_MEDIATION) {
-            $errors[] = 'New cases must start with Mediation.';
+            $errors[] = 'New cases must start with M.';
         }
 
         $this->validateDateDependencies($dateFiled, $initialConfrontation, $settlementAward, $executionDate, $errors);
@@ -940,7 +940,7 @@ class CaseModel
                 }
 
                 if ($caseStatus !== '' && $caseStatus !== self::STATUS_MEDIATION) {
-                    $rowErrors[] = 'New cases must start with Mediation.';
+                    $rowErrors[] = 'New cases must start with M.';
                 }
 
                 $dateFiled = $this->parseImportDate($dateFiledInput, 'Date Filed', $rowErrors);
@@ -1207,12 +1207,12 @@ class CaseModel
         }
 
         if ($currentStatus === self::STATUS_MEDIATION) {
-            $errors[] = 'Cases in Mediation can only move to Conciliation.';
+            $errors[] = 'Cases in M can only move to C.';
             return;
         }
 
         if ($currentStatus === self::STATUS_CONCILIATION) {
-            $errors[] = 'Cases in Conciliation can only move to Dismissed, CFA, or Endorsed.';
+            $errors[] = 'Cases in C can only move to Dismissed, CFA, or Endorsed.';
             return;
         }
 

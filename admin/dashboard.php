@@ -54,6 +54,13 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
             <?php include '../includes/admin_header.php'; ?>
 
             <main class="admin-main">
+                <section class="admin-welcome-banner">
+                    <div>
+                        <h2>Good Day, <?php echo htmlspecialchars($adminName); ?>!</h2>
+                        <p><?php echo htmlspecialchars($adminRole); ?> account</p>
+                    </div>
+                </section>
+
                 <section class="admin-stats-grid dashboard-stats-grid" aria-label="Case summary">
                     <article class="admin-stat-card dashboard-stat-card dashboard-stat-card-wide accent-blue">
                         <div class="dashboard-stat-copy">
@@ -79,7 +86,7 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
 
                     <article class="admin-stat-card dashboard-stat-card accent-cyan">
                         <div class="dashboard-stat-copy">
-                            <span class="dashboard-stat-title">Mediation</span>
+                            <span class="dashboard-stat-title">M</span>
                             <strong><?php echo number_format($caseCounts['mediation'] ?? 0); ?></strong>
                             <p>Cases currently under mediation process</p>
                         </div>
@@ -90,7 +97,7 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
 
                     <article class="admin-stat-card dashboard-stat-card accent-green">
                         <div class="dashboard-stat-copy">
-                            <span class="dashboard-stat-title">Conciliation</span>
+                            <span class="dashboard-stat-title">C</span>
                             <strong><?php echo number_format($caseCounts['conciliation'] ?? 0); ?></strong>
                             <p>Cases undergoing settlement discussion</p>
                         </div>

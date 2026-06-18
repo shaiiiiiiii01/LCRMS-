@@ -263,9 +263,9 @@ try {
                                         <label for="status">Case Status</label>
                                         <select id="status" name="case_status">
                                             <option value="" selected>Select case status</option>
-                                            <option>Mediation</option>
-                                            <option>Conciliation</option>
-                                            <option>CFA (Certificate of File Action)</option>
+                                            <option>M</option>
+                                            <option>C</option>
+                                            <option>CFA</option>
                                             <option>Endorsed</option>
                                             <option>Dismissed</option>
                                         </select>

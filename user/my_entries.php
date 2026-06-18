@@ -55,7 +55,9 @@ function entry_status_label(string $status): string
     $normalized = strtolower(trim($status));
 
     return match ($normalized) {
-        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action', 'cfa (certificate of file action)', 'certificate of file action' => 'CFA (Certificate of File Action)',
+        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action', 'cfa (certificate of file action)', 'certificate of file action' => 'CFA',
+        'm', 'mediation' => 'M',
+        'c', 'conciliation', 'for conciliation stage' => 'C',
         default => $status,
     };
 }

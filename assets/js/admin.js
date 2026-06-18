@@ -23,7 +23,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const loginSubmit = document.querySelector("[data-login-submit]");
 
     if (loginForm && loginLoading) {
-        loginForm.addEventListener("submit", () => {
+        loginForm.addEventListener("submit", (event) => {
+            if (loginForm.dataset.loginDelayComplete === "true") {
+                return;
+            }
+
+            event.preventDefault();
             loginLoading.setAttribute("aria-hidden", "false");
             document.body.classList.add("is-login-loading");
 
@@ -31,16 +36,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 loginSubmit.disabled = true;
                 loginSubmit.querySelector("span").textContent = "Signing in...";
             }
+
+            window.setTimeout(() => {
+                loginForm.dataset.loginDelayComplete = "true";
+                loginForm.submit();
+            }, 2000);
         });
     }
 
     document.querySelectorAll("[data-logout-link]").forEach((logoutLink) => {
-        logoutLink.addEventListener("click", () => {
+        logoutLink.addEventListener("click", (event) => {
+            if (logoutLink.dataset.logoutDelayComplete === "true") {
+                return;
+            }
+
             const logoutLoading = document.querySelector("[data-logout-loading]");
 
             if (logoutLoading) {
+                event.preventDefault();
                 logoutLoading.setAttribute("aria-hidden", "false");
                 document.body.classList.add("is-session-loading");
+
+                window.setTimeout(() => {
+                    logoutLink.dataset.logoutDelayComplete = "true";
+                    window.location.href = logoutLink.href;
+                }, 1000);
             }
         });
     });
@@ -258,15 +278,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const lower = value.toLowerCase();
 
         if (lower === "cfa" || lower === "cfa (call for action)" || lower === "call for action" || lower === "cfa (certificate to file action)" || lower === "certificate to file action" || lower === "cfa (certificate of file action)" || lower === "certificate of file action") {
-            return "CFA (Certificate of File Action)";
+            return "CFA";
         }
 
         if (lower === "m" || lower === "mediation") {
-            return "Mediation";
+            return "M";
         }
 
         if (lower === "c" || lower === "conciliation" || lower === "for conciliation stage") {
-            return "Conciliation";
+            return "C";
         }
 
         return value;
@@ -596,9 +616,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const caseStatusValue = normalizeAdminCaseStatusValue(caseData.case_status);
 
         const statusChoices = [
-            { value: "Mediation", label: "Mediation" },
-            { value: "Conciliation", label: "Conciliation" },
-            { value: "CFA (Certificate of File Action)", label: "CFA (Certificate of File Action)" },
+            { value: "M", label: "M" },
+            { value: "C", label: "C" },
+            { value: "CFA", label: "CFA" },
             { value: "Endorsed", label: "Endorsed" },
             { value: "Dismissed", label: "Dismissed" },
         ];

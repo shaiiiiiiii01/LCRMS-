@@ -13,9 +13,9 @@ function lcrms_case_docx_status(?string $status): string
     $status = trim((string) ($status ?? ''));
 
     return match (strtolower($status)) {
-        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action', 'cfa (certificate of file action)', 'certificate of file action' => 'CFA (Certificate of File Action)',
-        'm', 'mediation' => 'Mediation',
-        'c', 'conciliation', 'for conciliation stage' => 'Conciliation',
+        'cfa', 'cfa (call for action)', 'call for action', 'cfa (certificate to file action)', 'certificate to file action', 'cfa (certificate of file action)', 'certificate of file action' => 'CFA',
+        'm', 'mediation' => 'M',
+        'c', 'conciliation', 'for conciliation stage' => 'C',
         default => $status,
     };
 }

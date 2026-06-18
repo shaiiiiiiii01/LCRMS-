@@ -70,7 +70,7 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
 
                     <a class="admin-stat-card dashboard-stat-card cases-filter-card accent-cyan<?php echo $caseStatus === 'm' ? ' is-active' : ''; ?>" href="cases.php?status=m#caseSearch" data-case-filter-card data-case-filter-status="m">
                         <div class="dashboard-stat-copy">
-                            <span class="dashboard-stat-title">Mediation</span>
+                            <span class="dashboard-stat-title">M</span>
                             <strong><?php echo number_format($caseCounts['mediation'] ?? 0); ?></strong>
                             <p>Cases currently under mediation process</p>
                         </div>
@@ -81,7 +81,7 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
 
                     <a class="admin-stat-card dashboard-stat-card cases-filter-card accent-green<?php echo $caseStatus === 'c' ? ' is-active' : ''; ?>" href="cases.php?status=c#caseSearch" data-case-filter-card data-case-filter-status="c">
                         <div class="dashboard-stat-copy">
-                            <span class="dashboard-stat-title">Conciliation</span>
+                            <span class="dashboard-stat-title">C</span>
                             <strong><?php echo number_format($caseCounts['conciliation'] ?? 0); ?></strong>
                             <p>Cases undergoing settlement discussion</p>
                         </div>
