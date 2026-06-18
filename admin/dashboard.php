@@ -55,11 +55,11 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
 
             <main class="admin-main">
                 <section class="admin-stats-grid dashboard-stats-grid" aria-label="Case summary">
-                    <article class="admin-stat-card dashboard-stat-card accent-blue">
+                    <article class="admin-stat-card dashboard-stat-card dashboard-stat-card-wide accent-blue">
                         <div class="dashboard-stat-copy">
                             <span class="dashboard-stat-title">Total Cases</span>
                             <strong><?php echo number_format($caseCounts['total'] ?? 0); ?></strong>
-                            <p>All recorded cases</p>
+                            <p>All recorded cases in the system</p>
                         </div>
                         <div class="dashboard-stat-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><rect x="3" y="6" width="18" height="14" rx="2"></rect><path d="M9 12h6M9 16h4"></path></svg>
@@ -70,43 +70,32 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
                         <div class="dashboard-stat-copy">
                             <span class="dashboard-stat-title">New Cases</span>
                             <strong><?php echo number_format($caseCounts['new_today'] ?? 0); ?></strong>
-                            <p>Cases created today</p>
+                            <p>Recently filed cases awaiting review</p>
                         </div>
                         <div class="dashboard-stat-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path><circle cx="12" cy="12" r="9"></circle></svg>
                         </div>
                     </article>
 
-                    <article class="admin-stat-card dashboard-stat-card accent-red">
+                    <article class="admin-stat-card dashboard-stat-card accent-cyan">
                         <div class="dashboard-stat-copy">
-                            <span class="dashboard-stat-title">Certificate of File Action (CFA)</span>
-                            <strong><?php echo number_format($caseCounts['cfa'] ?? 0); ?></strong>
-                            <p>Cases requiring action</p>
+                            <span class="dashboard-stat-title">Mediation</span>
+                            <strong><?php echo number_format($caseCounts['mediation'] ?? 0); ?></strong>
+                            <p>Cases currently under mediation process</p>
                         </div>
                         <div class="dashboard-stat-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>
+                            <svg viewBox="0 0 24 24"><path d="M7 8h10M7 12h6"></path><path d="M21 12a8.5 8.5 0 0 1-12.2 7.7L3 21l1.4-5.5A8.5 8.5 0 1 1 21 12z"></path></svg>
                         </div>
                     </article>
 
                     <article class="admin-stat-card dashboard-stat-card accent-green">
                         <div class="dashboard-stat-copy">
-                            <span class="dashboard-stat-title">Resolved</span>
-                            <strong><?php echo number_format($caseCounts['resolved'] ?? 0); ?></strong>
-                            <p>Resolved case records</p>
+                            <span class="dashboard-stat-title">Conciliation</span>
+                            <strong><?php echo number_format($caseCounts['conciliation'] ?? 0); ?></strong>
+                            <p>Cases undergoing settlement discussion</p>
                         </div>
                         <div class="dashboard-stat-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 12.5l2.6 2.6L16 9"></path></svg>
-                        </div>
-                    </article>
-
-                    <article class="admin-stat-card dashboard-stat-card accent-orange">
-                        <div class="dashboard-stat-copy">
-                            <span class="dashboard-stat-title">Endorsed</span>
-                            <strong><?php echo number_format($caseCounts['endorsed'] ?? 0); ?></strong>
-                            <p>Cases endorsed onward</p>
-                        </div>
-                        <div class="dashboard-stat-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7z"></path></svg>
+                            <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.12 3-2.5S17.66 6 16 6s-3 1.12-3 2.5S14.34 11 16 11z"></path><path d="M8 11c1.66 0 3-1.12 3-2.5S9.66 6 8 6 5 7.12 5 8.5 6.34 11 8 11z"></path><path d="M2 19c.5-2.8 2.7-5 6-5 1.4 0 2.6.4 3.5 1.1M22 19c-.5-2.8-2.7-5-6-5-1.4 0-2.6.4-3.5 1.1"></path></svg>
                         </div>
                     </article>
 
@@ -114,10 +103,32 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
                         <div class="dashboard-stat-copy">
                             <span class="dashboard-stat-title">Dismissed</span>
                             <strong><?php echo number_format($caseCounts['dismissed'] ?? 0); ?></strong>
-                            <p>Cases marked dismissed</p>
+                            <p>Closed and dismissed case records</p>
                         </div>
                         <div class="dashboard-stat-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6M9 9l6 6"></path></svg>
+                        </div>
+                    </article>
+
+                    <article class="admin-stat-card dashboard-stat-card accent-red">
+                        <div class="dashboard-stat-copy">
+                            <span class="dashboard-stat-title">CFA</span>
+                            <strong><?php echo number_format($caseCounts['cfa'] ?? 0); ?></strong>
+                            <p>Cases approved for further legal action</p>
+                        </div>
+                        <div class="dashboard-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>
+                        </div>
+                    </article>
+
+                    <article class="admin-stat-card dashboard-stat-card accent-orange">
+                        <div class="dashboard-stat-copy">
+                            <span class="dashboard-stat-title">Endorsed</span>
+                            <strong><?php echo number_format($caseCounts['endorsed'] ?? 0); ?></strong>
+                            <p>Cases forwarded to the proper authority</p>
+                        </div>
+                        <div class="dashboard-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7z"></path></svg>
                         </div>
                     </article>
                 </section>

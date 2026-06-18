@@ -7,6 +7,7 @@ class CaseModel
     private const STATUS_CONCILIATION = 'Conciliation';
     private const STATUS_CFA = 'CFA (Certificate of File Action)';
     private const NATURE_OPTIONS = ['Civil', 'Criminal'];
+    private const COMPLAINANT_STATUS_OPTIONS = ['Single', 'Married', 'Widowed', 'Separated'];
     private const DISMISSAL_REASONS = [
         'Complainant withdrew/dropped the case (inurong ang kaso)',
         'Respondent failed to appear (di dumating ang respondent)',
@@ -23,22 +24,27 @@ class CaseModel
     public function create(array $payload, array $account): array
     {
         error_log('LCRMS CaseModel create reached.');
-        $caseTitle = trim((string) ($payload['case_title'] ?? ''));
-        $complainantTitle = trim((string) ($payload['complainant_title'] ?? ''));
+        $caseTitleInput = trim((string) ($payload['case_title'] ?? ''));
+        $complainantTitleInput = trim((string) ($payload['complainant_title'] ?? ''));
+        $caseTitle = $this->normalizeLettersUppercase($caseTitleInput);
+        $complainantTitle = $this->normalizeLettersUppercase($complainantTitleInput);
         $natureOfCase = $this->normalizeNatureOfCase((string) ($payload['nature_of_case'] ?? ''));
         $dateFiledInput = trim((string) ($payload['date_filed'] ?? ''));
         $details = trim((string) ($payload['detailed_case_description'] ?? ''));
         $agreement = trim((string) ($payload['main_point_of_agreement'] ?? ''));
-        $complainantFullName = trim((string) ($payload['complainant_full_name'] ?? ''));
+        $complainantFullNameInput = trim((string) ($payload['complainant_full_name'] ?? ''));
+        $complainantReligionInput = trim((string) ($payload['complainant_religion'] ?? ''));
+        $respondentFullNameInput = trim((string) ($payload['respondent_full_name'] ?? ''));
+        $complainantFullName = $this->normalizeLettersUppercase($complainantFullNameInput);
         $complainantAddress = trim((string) ($payload['complainant_address'] ?? ''));
-        $complainantStatus = trim((string) ($payload['complainant_status'] ?? ''));
-        $complainantReligion = trim((string) ($payload['complainant_religion'] ?? ''));
+        $complainantStatus = $this->normalizeComplainantStatus((string) ($payload['complainant_status'] ?? ''));
+        $complainantReligion = $this->normalizeLettersUppercase($complainantReligionInput);
         $complainantBirthdateInput = trim((string) ($payload['complainant_birthdate'] ?? ''));
         $complainantGovernmentId = trim((string) ($payload['complainant_government_id'] ?? ''));
-        $complainantContactNumber = trim((string) ($payload['complainant_contact_number'] ?? ''));
-        $respondentFullName = trim((string) ($payload['respondent_full_name'] ?? ''));
+        $complainantContactNumber = $this->normalizeDigits((string) ($payload['complainant_contact_number'] ?? ''));
+        $respondentFullName = $this->normalizeLettersUppercase($respondentFullNameInput);
         $respondentAddress = trim((string) ($payload['respondent_address'] ?? ''));
-        $respondentContactNumber = trim((string) ($payload['respondent_contact_number'] ?? ''));
+        $respondentContactNumber = $this->normalizeDigits((string) ($payload['respondent_contact_number'] ?? ''));
         $errors = [];
 
         if ($caseTitle === '') {
@@ -80,6 +86,25 @@ class CaseModel
             if ($value === '') {
                 $errors[] = "{$label} is required.";
             }
+        }
+
+        $this->validateLettersOnly($caseTitleInput, 'Case Title', $errors);
+        $this->validateLettersOnly($complainantTitleInput, 'Complainant Title', $errors);
+        $this->validateLettersOnly($complainantFullNameInput, 'Complainant Full Name', $errors);
+        $this->validateLettersOnly($complainantReligionInput, 'Complainant Religion', $errors);
+        $this->validateLettersOnly($respondentFullNameInput, 'Respondent Full Name', $errors);
+        $this->validateMaxLength($complainantAddress, 'Complainant Address', 255, $errors);
+        $this->validateMaxLength($respondentAddress, 'Respondent Address', 255, $errors);
+        $this->validateMaxLength($complainantGovernmentId, 'Complainant Government ID', 150, $errors);
+        $this->validateExactDigits($complainantContactNumber, 'Complainant Contact Number', 11, $errors);
+        $this->validateExactDigits($respondentContactNumber, 'Respondent Contact Number', 11, $errors);
+
+        if ($complainantStatus !== '' && !in_array($complainantStatus, self::COMPLAINANT_STATUS_OPTIONS, true)) {
+            $errors[] = 'Complainant Status must be Single, Married, Widowed, or Separated.';
+        }
+
+        if ($complainantBirthdateInput !== '' && !$this->hasFourDigitDateYear($complainantBirthdateInput)) {
+            $errors[] = 'Complainant Birthdate year must be exactly 4 digits.';
         }
 
         $dateFiled = $this->parseRequiredDate($dateFiledInput, 'Date Filed', $errors);
@@ -383,6 +408,57 @@ class CaseModel
         return (int) ($row['total'] ?? 0);
     }
 
+    public function dashboardCountsForAccount(array $account): array
+    {
+        $counts = [
+            'total' => 0,
+            'new_today' => 0,
+            'mediation' => 0,
+            'conciliation' => 0,
+            'dismissed' => 0,
+            'cfa' => 0,
+            'endorsed' => 0,
+        ];
+        $ownerId = $this->currentAccountId($account);
+        $createdBy = $this->currentFullname($account);
+
+        if ($ownerId <= 0 && $createdBy === '') {
+            return $counts;
+        }
+
+        $stmt = mysqli_prepare(
+            $this->conn,
+            "SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN DATE(date_created) = CURDATE() THEN 1 ELSE 0 END) AS new_today,
+                SUM(CASE WHEN LOWER(case_status) IN ('m', 'mediation') THEN 1 ELSE 0 END) AS mediation,
+                SUM(CASE WHEN LOWER(case_status) IN ('c', 'conciliation', 'for conciliation stage') THEN 1 ELSE 0 END) AS conciliation,
+                SUM(CASE WHEN LOWER(case_status) = 'dismissed' THEN 1 ELSE 0 END) AS dismissed,
+                SUM(CASE WHEN LOWER(case_status) IN ('cfa', 'cfa (call for action)', 'cfa (certificate to file action)', 'cfa (certificate of file action)') THEN 1 ELSE 0 END) AS cfa,
+                SUM(CASE WHEN LOWER(case_status) = 'endorsed' THEN 1 ELSE 0 END) AS endorsed
+            FROM cases
+            WHERE ((created_by_user_id > 0 AND created_by_user_id = ?) OR (created_by_user_id = 0 AND created_by = ?))"
+        );
+
+        if (!$stmt) {
+            return $counts;
+        }
+
+        mysqli_stmt_bind_param($stmt, 'is', $ownerId, $createdBy);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $row = $result ? mysqli_fetch_assoc($result) : null;
+        mysqli_stmt_close($stmt);
+
+        if ($row) {
+            foreach ($counts as $key => $value) {
+                $counts[$key] = (int) ($row[$key] ?? 0);
+            }
+        }
+
+        return $counts;
+    }
+
     public function listAll(int $limit = 50): array
     {
         $cases = [];
@@ -544,6 +620,8 @@ class CaseModel
             'new_today' => 0,
             'pending' => 0,
             'ongoing' => 0,
+            'mediation' => 0,
+            'conciliation' => 0,
             'cfa' => 0,
             'resolved' => 0,
             'endorsed' => 0,
@@ -556,6 +634,8 @@ class CaseModel
                 SUM(CASE WHEN DATE(date_created) = CURDATE() THEN 1 ELSE 0 END) AS new_today,
                 SUM(CASE WHEN LOWER(case_status) IN ('m', 'mediation', 'c', 'conciliation', 'for conciliation stage') THEN 1 ELSE 0 END) AS pending,
                 SUM(CASE WHEN LOWER(case_status) NOT IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)', 'cfa (certificate of file action)') THEN 1 ELSE 0 END) AS ongoing,
+                SUM(CASE WHEN LOWER(case_status) IN ('m', 'mediation') THEN 1 ELSE 0 END) AS mediation,
+                SUM(CASE WHEN LOWER(case_status) IN ('c', 'conciliation', 'for conciliation stage') THEN 1 ELSE 0 END) AS conciliation,
                 SUM(CASE WHEN LOWER(case_status) IN ('cfa', 'cfa (call for action)', 'cfa (certificate to file action)', 'cfa (certificate of file action)') THEN 1 ELSE 0 END) AS cfa,
                 SUM(CASE WHEN LOWER(case_status) IN ('settled', 'dismissed', 'endorsed', 'cfa', 'cfa (call for action)', 'cfa (certificate to file action)', 'cfa (certificate of file action)') THEN 1 ELSE 0 END) AS resolved,
                 SUM(CASE WHEN LOWER(case_status) = 'endorsed' THEN 1 ELSE 0 END) AS endorsed,
@@ -810,8 +890,10 @@ class CaseModel
                 $excelRow = (int) ($row['_row'] ?? 0);
                 $rowErrors = [];
                 $caseNumber = trim((string) ($row['case_number'] ?? ''));
-                $caseTitle = trim((string) ($row['case_title'] ?? ''));
-                $complainantTitle = trim((string) ($row['complainant_title'] ?? ''));
+                $caseTitleInput = trim((string) ($row['case_title'] ?? ''));
+                $complainantTitleInput = trim((string) ($row['complainant_title'] ?? ''));
+                $caseTitle = $this->normalizeLettersUppercase($caseTitleInput);
+                $complainantTitle = $this->normalizeLettersUppercase($complainantTitleInput);
                 $natureOfCase = $this->normalizeNatureOfCase((string) ($row['nature_of_case'] ?? ''));
                 $dateFiledInput = trim((string) ($row['date_filed'] ?? ''));
                 $caseStatus = $this->normalizeStatus((string) ($row['case_status'] ?? ''));
@@ -831,6 +913,9 @@ class CaseModel
                 if ($complainantTitle === '') {
                     $rowErrors[] = 'Complainant Title is required.';
                 }
+
+                $this->validateLettersOnly($caseTitleInput, 'Case Title', $rowErrors);
+                $this->validateLettersOnly($complainantTitleInput, 'Complainant Title', $rowErrors);
 
                 if ($natureOfCase === '') {
                     $rowErrors[] = 'Nature of Case is required.';
@@ -1230,6 +1315,60 @@ class CaseModel
         }
 
         return false;
+    }
+
+    private function normalizeLettersUppercase(string $value): string
+    {
+        $value = (string) preg_replace('/[^\p{L}\s]/u', '', $value);
+        $value = (string) preg_replace('/\s+/', ' ', trim($value));
+
+        return function_exists('mb_strtoupper') ? mb_strtoupper($value, 'UTF-8') : strtoupper($value);
+    }
+
+    private function normalizeDigits(string $value): string
+    {
+        return (string) preg_replace('/\D+/', '', $value);
+    }
+
+    private function normalizeComplainantStatus(string $status): string
+    {
+        $status = strtolower(trim($status));
+
+        foreach (self::COMPLAINANT_STATUS_OPTIONS as $option) {
+            if (strtolower($option) === $status) {
+                return $option;
+            }
+        }
+
+        return trim($status);
+    }
+
+    private function validateLettersOnly(string $value, string $label, array &$errors): void
+    {
+        if ($value !== '' && !preg_match('/^[\p{L}\s]+$/u', $value)) {
+            $errors[] = "{$label} must contain letters only.";
+        }
+    }
+
+    private function validateMaxLength(string $value, string $label, int $maxLength, array &$errors): void
+    {
+        $length = function_exists('mb_strlen') ? mb_strlen($value, 'UTF-8') : strlen($value);
+
+        if ($length > $maxLength) {
+            $errors[] = "{$label} must be {$maxLength} characters or fewer.";
+        }
+    }
+
+    private function validateExactDigits(string $value, string $label, int $length, array &$errors): void
+    {
+        if ($value !== '' && !preg_match('/^\d{' . $length . '}$/', $value)) {
+            $errors[] = "{$label} must be exactly {$length} digits.";
+        }
+    }
+
+    private function hasFourDigitDateYear(string $value): bool
+    {
+        return (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($value));
     }
 
     private function normalizeStatus(string $status): string

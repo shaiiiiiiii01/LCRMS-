@@ -45,25 +45,22 @@ try {
                 </section>
 
                 <section class="form-card add-case-form-card">
-                    <div class="case-card-heading">
-                        <div class="case-heading-title">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
-                                <path d="M14 2v5h5M12 11v6M9 14h6"></path>
-                            </svg>
-                            <div>
-                                <h2>New Case Record</h2>
-                                <p>Populate the fields below to initiate a formal case entry into the system.</p>
-                            </div>
-                        </div>
-                    </div>
-
                     <form class="case-form" action="cases_api.php?action=create" method="post" data-case-form novalidate>
                         <div class="case-form-grid">
-                            <section class="form-section">
+                            <section class="form-section case-id-section">
                                 <div class="form-section-title">
-                                    <h3>Case Identification</h3>
-                                    <p>Basic filing details used to classify and locate the case record.</p>
+                                    <div class="section-title-copy">
+                                        <span class="section-heading-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24">
+                                                <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
+                                                <path d="M14 2v5h5M9 13h6M9 17h4"></path>
+                                            </svg>
+                                        </span>
+                                        <div>
+                                            <h3>Case Identification</h3>
+                                            <p>Basic filing details used to classify and locate the case record.</p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="section-grid">
@@ -78,12 +75,12 @@ try {
 
                                     <div class="form-group wide">
                                         <label for="caseTitle">Case Title</label>
-                                        <input id="caseTitle" name="case_title" type="text" placeholder="COMPLIANT VS. RESPONDENT">
+                                        <input id="caseTitle" name="case_title" type="text" placeholder="COMPLAINANT VS RESPONDENT" maxlength="255" data-letters-uppercase>
                                     </div>
 
                                     <div class="form-group">
                                         <label for="complainantTitle">Complainant Title</label>
-                                        <input id="complainantTitle" name="complainant_title" type="text" placeholder="e.g., Ejection">
+                                        <input id="complainantTitle" name="complainant_title" type="text" placeholder="EJECTION" maxlength="255" data-letters-uppercase>
                                     </div>
 
                                     <div class="form-group">
@@ -102,10 +99,141 @@ try {
                                 </div>
                             </section>
 
-                            <section class="form-section">
+                            <section class="form-section case-party-section complainant-section is-collapsed" data-case-collapsible>
                                 <div class="form-section-title">
-                                    <h3>Schedule and Status</h3>
-                                    <p>Track filing dates, case movement, and the current case status.</p>
+                                    <div class="section-title-copy">
+                                        <span class="section-heading-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24">
+                                                <path d="M20 21a8 8 0 0 0-16 0"></path>
+                                                <circle cx="12" cy="8" r="4"></circle>
+                                            </svg>
+                                        </span>
+                                        <div>
+                                            <h3>Complainant Information</h3>
+                                            <p>Additional personal details for the complainant record.</p>
+                                        </div>
+                                    </div>
+                                    <button class="section-toggle-button" type="button" data-case-collapsible-toggle aria-expanded="false" aria-controls="complainantInfoFields">
+                                        <span>Show fields</span>
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M6 9l6 6 6-6"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div id="complainantInfoFields" class="collapsible-section-body" data-case-collapsible-body aria-hidden="true">
+                                    <div class="section-grid">
+                                        <div class="form-group">
+                                            <label for="complainantFullName">Full Name</label>
+                                            <input id="complainantFullName" name="complainant_full_name" type="text" placeholder="Enter full name" maxlength="255" data-letters-uppercase>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantStatus">Status</label>
+                                            <select id="complainantStatus" name="complainant_status">
+                                                <option value="" selected>Select status</option>
+                                                <option>Single</option>
+                                                <option>Married</option>
+                                                <option>Widowed</option>
+                                                <option>Separated</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group wide">
+                                            <label for="complainantAddress">Address</label>
+                                            <input id="complainantAddress" name="complainant_address" type="text" placeholder="Enter complete address" maxlength="255">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantReligion">Religion</label>
+                                            <input id="complainantReligion" name="complainant_religion" type="text" placeholder="Enter religion" maxlength="100" data-letters-uppercase>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantBirthdate">Birthdate</label>
+                                            <div class="date-field">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                                                    <path d="M16 2v4M8 2v4M3 10h18"></path>
+                                                </svg>
+                                                <input id="complainantBirthdate" name="complainant_birthdate" type="date" data-age-source="complainant_age">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantAge">Age</label>
+                                            <input id="complainantAge" name="complainant_age" type="number" min="0" max="130" readonly placeholder="Auto-calculated">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantGovernmentId">Government ID</label>
+                                            <input id="complainantGovernmentId" name="complainant_government_id" type="text" placeholder="Enter ID details" maxlength="150">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="complainantContactNumber">Contact Number</label>
+                                            <input id="complainantContactNumber" name="complainant_contact_number" type="tel" placeholder="Enter 11-digit contact number" inputmode="numeric" maxlength="11" data-numeric-only data-exact-digits="11">
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="form-section case-party-section respondent-section is-collapsed" data-case-collapsible>
+                                <div class="form-section-title">
+                                    <div class="section-title-copy">
+                                        <span class="section-heading-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24">
+                                                <path d="M20 21a8 8 0 0 0-16 0"></path>
+                                                <circle cx="12" cy="8" r="4"></circle>
+                                            </svg>
+                                        </span>
+                                        <div>
+                                            <h3>Respondent Information</h3>
+                                            <p>Additional contact details for the respondent record.</p>
+                                        </div>
+                                    </div>
+                                    <button class="section-toggle-button" type="button" data-case-collapsible-toggle aria-expanded="false" aria-controls="respondentInfoFields">
+                                        <span>Show fields</span>
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M6 9l6 6 6-6"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div id="respondentInfoFields" class="collapsible-section-body" data-case-collapsible-body aria-hidden="true">
+                                    <div class="section-grid">
+                                        <div class="form-group">
+                                            <label for="respondentFullName">Full Name</label>
+                                            <input id="respondentFullName" name="respondent_full_name" type="text" placeholder="Enter full name" maxlength="255" data-letters-uppercase>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="respondentContactNumber">Contact Number</label>
+                                            <input id="respondentContactNumber" name="respondent_contact_number" type="tel" placeholder="Enter 11-digit contact number" inputmode="numeric" maxlength="11" data-numeric-only data-exact-digits="11">
+                                        </div>
+
+                                        <div class="form-group wide">
+                                            <label for="respondentAddress">Address</label>
+                                            <input id="respondentAddress" name="respondent_address" type="text" placeholder="Enter complete address" maxlength="255">
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="form-section schedule-status-section">
+                                <div class="form-section-title">
+                                    <div class="section-title-copy">
+                                        <span class="section-heading-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24">
+                                                <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                                                <path d="M16 2v4M8 2v4M3 10h18"></path>
+                                            </svg>
+                                        </span>
+                                        <div>
+                                            <h3>Schedule and Status</h3>
+                                            <p>Track filing dates, case movement, and the current case status.</p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="date-status-grid">
@@ -167,10 +295,20 @@ try {
                                 </div>
                             </section>
 
-                            <section class="form-section">
+                            <section class="form-section narrative-section">
                                 <div class="form-section-title">
-                                    <h3>Case Narrative</h3>
-                                    <p>Document the incident details and any agreement reached during proceedings.</p>
+                                    <div class="section-title-copy">
+                                        <span class="section-heading-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24">
+                                                <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
+                                                <path d="M14 2v5h5M9 13h6M9 17h6"></path>
+                                            </svg>
+                                        </span>
+                                        <div>
+                                            <h3>Case Narrative</h3>
+                                            <p>Document the incident details and any agreement reached during proceedings.</p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="section-grid narrative-grid">
@@ -184,118 +322,25 @@ try {
                                         <textarea id="agreement" name="main_point_of_agreement" rows="5" placeholder="Provide the agreement of the case"></textarea>
                                     </div>
                                 </div>
-                            </section>
 
-                            <section class="form-section case-party-section is-collapsed" data-case-collapsible>
-                                <div class="form-section-title">
-                                    <div>
-                                        <h3>Complainant Information</h3>
-                                        <p>Additional personal details for the complainant record.</p>
+                                <div class="form-note">
+                                    <p>Maximum 2500 characters required for detailed documentation and the main point of agreement</p>
+                                </div>
+
+                                <div class="case-form-actions">
+                                    <div class="text-actions">
+                                        <button type="reset">Clear Form</button>
+                                        <a href="dashboard.php">Cancel</a>
                                     </div>
-                                    <button class="section-toggle-button" type="button" data-case-collapsible-toggle aria-expanded="false" aria-controls="complainantInfoFields">
-                                        <span>Show fields</span>
+                                    <button class="primary-button compact" type="submit">
                                         <svg viewBox="0 0 24 24" aria-hidden="true">
-                                            <path d="M6 9l6 6 6-6"></path>
+                                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                            <path d="M17 21v-8H7v8M7 3v5h8"></path>
                                         </svg>
+                                        <span>Save Record</span>
                                     </button>
                                 </div>
-
-                                <div id="complainantInfoFields" class="collapsible-section-body" data-case-collapsible-body aria-hidden="true">
-                                    <div class="section-grid">
-                                        <div class="form-group">
-                                            <label for="complainantFullName">Full Name</label>
-                                            <input id="complainantFullName" name="complainant_full_name" type="text" placeholder="Enter full name">
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label for="complainantStatus">Status</label>
-                                            <input id="complainantStatus" name="complainant_status" type="text" placeholder="e.g., Single, Married">
-                                        </div>
-
-                                        <div class="form-group wide">
-                                            <label for="complainantAddress">Address</label>
-                                            <input id="complainantAddress" name="complainant_address" type="text" placeholder="Enter complete address">
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label for="complainantReligion">Religion</label>
-                                            <input id="complainantReligion" name="complainant_religion" type="text" placeholder="Enter religion">
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label for="complainantBirthdate">Birthdate</label>
-                                            <div class="date-field">
-                                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
-                                                    <path d="M16 2v4M8 2v4M3 10h18"></path>
-                                                </svg>
-                                                <input id="complainantBirthdate" name="complainant_birthdate" type="date" data-age-source="complainant_age">
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label for="complainantAge">Age</label>
-                                            <input id="complainantAge" name="complainant_age" type="number" min="0" max="130" readonly placeholder="Auto-calculated">
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label for="complainantGovernmentId">Government ID</label>
-                                            <input id="complainantGovernmentId" name="complainant_government_id" type="text" placeholder="Enter ID details">
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label for="complainantContactNumber">Contact Number</label>
-                                            <input id="complainantContactNumber" name="complainant_contact_number" type="tel" placeholder="Enter contact number">
-                                        </div>
-                                    </div>
-                                </div>
                             </section>
-
-                            <section class="form-section case-party-section is-collapsed" data-case-collapsible>
-                                <div class="form-section-title">
-                                    <div>
-                                        <h3>Respondent Information</h3>
-                                        <p>Additional contact details for the respondent record.</p>
-                                    </div>
-                                    <button class="section-toggle-button" type="button" data-case-collapsible-toggle aria-expanded="false" aria-controls="respondentInfoFields">
-                                        <span>Show fields</span>
-                                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                                            <path d="M6 9l6 6 6-6"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-
-                                <div id="respondentInfoFields" class="collapsible-section-body" data-case-collapsible-body aria-hidden="true">
-                                    <div class="section-grid">
-                                        <div class="form-group">
-                                            <label for="respondentFullName">Full Name</label>
-                                            <input id="respondentFullName" name="respondent_full_name" type="text" placeholder="Enter full name">
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label for="respondentContactNumber">Contact Number</label>
-                                            <input id="respondentContactNumber" name="respondent_contact_number" type="tel" placeholder="Enter contact number">
-                                        </div>
-
-                                        <div class="form-group wide">
-                                            <label for="respondentAddress">Address</label>
-                                            <input id="respondentAddress" name="respondent_address" type="text" placeholder="Enter complete address">
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-                        </div>
-
-                        <div class="form-note">
-                            <p>Maximum 2500 characters required for detailed documentation and the main point of agreement</p>
-                        </div>
-
-                        <div class="case-form-actions">
-                            <div class="text-actions">
-                                <button type="reset">Clear Form</button>
-                                <a href="dashboard.php">Cancel</a>
-                            </div>
-                            <button class="primary-button compact" type="submit">Save Record</button>
                         </div>
                     </form>
                 </section>

@@ -1298,22 +1298,23 @@ body.sidebar-collapsed .user-sidebar {
 }
 
 .add-case-main {
-    max-width: 930px;
-    margin: 0 auto;
-    padding: 32px 12px 64px;
+    max-width: none;
+    margin: 0;
+    padding: 24px 40px 20px;
 }
 
 .guidelines-panel {
-    min-height: 76px;
+    min-height: 74px;
     display: flex;
     align-items: flex-start;
     gap: 14px;
-    margin-bottom: 44px;
-    padding: 18px 18px;
+    margin-bottom: 20px;
+    padding: 18px 20px;
     border: 1px solid #b9dcff;
     border-radius: 8px;
-    background: #edf7ff;
+    background: linear-gradient(180deg, #f3fbff, #edf7ff);
     color: #163755;
+    box-shadow: 0 12px 28px rgba(24, 35, 52, 0.04);
 }
 
 .guidelines-panel > svg {
@@ -1340,10 +1341,12 @@ body.sidebar-collapsed .user-sidebar {
 }
 
 .add-case-form-card {
-    width: min(100%, 960px);
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
+    margin: 0;
     overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .case-card-heading {
@@ -1380,7 +1383,139 @@ body.sidebar-collapsed .user-sidebar {
 }
 
 .add-case-form-card .case-form {
-    padding: 36px 42px 18px;
+    padding: 0;
+}
+
+.add-case-form-card .case-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    align-items: start;
+}
+
+.add-case-form-card .form-section {
+    min-width: 0;
+    gap: 22px;
+    padding: 20px 22px 22px;
+    border-color: #dde8f3;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 12px 28px rgba(24, 35, 52, 0.045);
+}
+
+.add-case-form-card .form-section-title {
+    min-height: 40px;
+    align-items: center;
+    padding-bottom: 17px;
+    border-bottom-color: #268df0;
+}
+
+.add-case-form-card .section-title-copy {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.add-case-form-card .section-title-copy > div {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.section-heading-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 24px;
+    color: #1685f9;
+}
+
+.section-heading-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.add-case-form-card .form-section-title h3 {
+    color: #111827;
+    font-size: 15px;
+    font-weight: 900;
+}
+
+.add-case-form-card .form-section-title p {
+    max-width: 100%;
+    text-align: left;
+}
+
+.case-id-section {
+    grid-column: 1 / -1;
+}
+
+.schedule-status-section {
+    grid-column: 1 / -1;
+}
+
+.complainant-section {
+    grid-column: 1 / -1;
+}
+
+.respondent-section {
+    grid-column: 1 / -1;
+}
+
+.narrative-section {
+    grid-column: 1 / -1;
+}
+
+.case-id-section .section-grid {
+    grid-template-columns: minmax(190px, 0.9fr) minmax(260px, 1.4fr) minmax(220px, 1fr) minmax(260px, 1.2fr);
+    gap: 24px 28px;
+}
+
+.complainant-section .section-grid,
+.respondent-section .section-grid {
+    grid-template-columns: repeat(4, minmax(190px, 1fr));
+    gap: 24px 28px;
+}
+
+.case-id-section .section-grid .wide {
+    grid-column: span 2;
+}
+
+.narrative-section .narrative-grid .form-group {
+    grid-column: 1 / -1;
+}
+
+.case-id-section .case-number-group {
+    width: 100%;
+}
+
+.schedule-status-section .date-status-grid {
+    grid-template-columns: repeat(5, minmax(150px, 1fr));
+    gap: 28px 26px;
+}
+
+.narrative-section .narrative-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+}
+
+.narrative-section textarea {
+    min-height: 190px;
+}
+
+.schedule-status-section .status-field-group {
+    grid-column: auto;
+}
+
+.narrative-section .form-note {
+    margin: -4px 0 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.narrative-section .case-form-actions {
+    margin-top: 4px;
 }
 
 .case-modal-open {
@@ -2252,6 +2387,59 @@ body.sidebar-collapsed .user-sidebar {
     .section-heading {
         align-items: flex-start;
         flex-direction: column;
+    }
+}
+
+@media (max-width: 1180px) {
+    .add-case-form-card .case-form-grid,
+    .narrative-section .narrative-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .case-id-section .section-grid,
+    .schedule-status-section .date-status-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .case-id-section,
+    .schedule-status-section,
+    .complainant-section,
+    .respondent-section,
+    .narrative-section {
+        grid-column: 1;
+    }
+}
+
+@media (max-width: 760px) {
+    .add-case-main {
+        padding: 18px 18px 20px;
+    }
+
+    .case-id-section .section-grid,
+    .schedule-status-section .date-status-grid,
+    .narrative-section .narrative-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .case-id-section .section-grid .wide,
+    .narrative-section .narrative-grid .form-group,
+    .status-field-group {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 680px) {
+    .add-case-form-card .case-form {
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+    .add-case-form-card .form-section-title {
+        align-items: flex-start;
+    }
+
+    .add-case-form-card .section-title-copy {
+        align-items: flex-start;
     }
 }
 

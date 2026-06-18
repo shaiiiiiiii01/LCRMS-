@@ -116,6 +116,34 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const requiredCaseFields = Object.keys(caseFieldLabels);
+    const lettersOnlyFields = ["case_title", "complainant_title", "complainant_full_name", "complainant_religion", "respondent_full_name"];
+    const exactDigitFields = {
+        complainant_contact_number: 11,
+        respondent_contact_number: 11,
+    };
+    const validComplainantStatuses = new Set(["Single", "Married", "Widowed", "Separated"]);
+
+    const sanitizeLettersUppercase = (value) => String(value || "").replace(/[^\p{L}\s]/gu, "").replace(/\s{2,}/g, " ").toUpperCase();
+    const sanitizeDigits = (value, maxLength = 11) => String(value || "").replace(/\D/g, "").slice(0, maxLength);
+    const hasFourDigitDateYear = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+    const isLettersOnly = (value) => /^[\p{L}\s]+$/u.test(String(value || "").trim());
+    const applyCaseInputSanitizers = (form) => {
+        lettersOnlyFields.forEach((name) => {
+            const field = form.elements[name];
+
+            if (field && !field.readOnly && !field.disabled) {
+                field.value = sanitizeLettersUppercase(field.value);
+            }
+        });
+
+        Object.entries(exactDigitFields).forEach(([name, length]) => {
+            const field = form.elements[name];
+
+            if (field && !field.readOnly && !field.disabled) {
+                field.value = sanitizeDigits(field.value, length);
+            }
+        });
+    };
 
     const showCaseModal = (type, title, message, details = []) => {
         const existingModal = document.querySelector("[data-case-modal]");
@@ -669,6 +697,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const validateCaseRules = (form) => {
+        applyCaseInputSanitizers(form);
+
         const errorsByName = new Map();
         const dateFiled = getCaseFormValue(form, "date_filed");
         const initialConfrontation = getCaseFormValue(form, "date_initial_confrontation");
@@ -692,6 +722,30 @@ document.addEventListener("DOMContentLoaded", () => {
         if (complainantBirthdate && calculatedComplainantAge === "") {
             addCaseValidationError(form, errorsByName, "complainant_birthdate", "Complainant Birthdate must be a valid past date.");
         }
+
+        if (complainantBirthdate && !hasFourDigitDateYear(complainantBirthdate)) {
+            addCaseValidationError(form, errorsByName, "complainant_birthdate", "Complainant Birthdate year must be exactly 4 digits.");
+        }
+
+        lettersOnlyFields.forEach((name) => {
+            const value = getCaseFormValue(form, name);
+
+            if (value !== "" && !isLettersOnly(value)) {
+                addCaseValidationError(form, errorsByName, name, `${caseFieldLabels[name]} must contain letters only.`);
+            }
+        });
+
+        if (getCaseFormValue(form, "complainant_status") !== "" && !validComplainantStatuses.has(getCaseFormValue(form, "complainant_status"))) {
+            addCaseValidationError(form, errorsByName, "complainant_status", "Complainant Status must be Single, Married, Widowed, or Separated.");
+        }
+
+        Object.entries(exactDigitFields).forEach(([name, length]) => {
+            const value = getCaseFormValue(form, name);
+
+            if (value !== "" && !new RegExp(`^\\d{${length}}$`).test(value)) {
+                addCaseValidationError(form, errorsByName, name, `${caseFieldLabels[name]} must be exactly ${length} digits.`);
+            }
+        });
 
         if (initialConfrontation && !dateFiled) {
             addCaseValidationError(form, errorsByName, "date_initial_confrontation", "Please enter Date Filed first.");
@@ -858,6 +912,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
             field.addEventListener("input", validateField);
             field.addEventListener("change", validateField);
+        });
+
+        lettersOnlyFields.forEach((name) => {
+            const field = form.elements[name];
+
+            if (!field) {
+                return;
+            }
+
+            field.addEventListener("input", () => {
+                field.value = sanitizeLettersUppercase(field.value);
+            });
+        });
+
+        Object.entries(exactDigitFields).forEach(([name, length]) => {
+            const field = form.elements[name];
+
+            if (!field) {
+                return;
+            }
+
+            field.addEventListener("input", () => {
+                field.value = sanitizeDigits(field.value, length);
+            });
         });
 
         ["date_initial_confrontation", "date_settlement_award", "date_execution", "case_status", "main_point_of_agreement"].forEach((name) => {

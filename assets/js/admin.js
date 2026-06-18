@@ -206,6 +206,28 @@ document.addEventListener("DOMContentLoaded", () => {
             field.name = options.name;
         }
 
+        if (options.maxLength) {
+            field.maxLength = options.maxLength;
+        }
+
+        if (options.lettersUppercase) {
+            field.dataset.lettersUppercase = "";
+        }
+
+        if (options.numericOnly) {
+            field.dataset.numericOnly = "";
+            field.inputMode = "numeric";
+            field.maxLength = options.exactDigits || options.maxLength || 11;
+        }
+
+        if (options.exactDigits) {
+            field.dataset.exactDigits = String(options.exactDigits);
+        }
+
+        if (options.ageSource) {
+            field.dataset.ageSource = options.ageSource;
+        }
+
         group.append(label, field);
 
         return group;
@@ -251,6 +273,77 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     let adminCaseValidationMessageId = 0;
+    const adminCaseFieldLabels = {
+        case_title: "Case Title",
+        complainant_title: "Complainant Title",
+        complainant_full_name: "Complainant Full Name",
+        complainant_address: "Complainant Address",
+        complainant_status: "Complainant Status",
+        complainant_religion: "Complainant Religion",
+        complainant_birthdate: "Complainant Birthdate",
+        complainant_age: "Complainant Age",
+        complainant_government_id: "Complainant Government ID",
+        complainant_contact_number: "Complainant Contact Number",
+        respondent_full_name: "Respondent Full Name",
+        respondent_address: "Respondent Address",
+        respondent_contact_number: "Respondent Contact Number",
+    };
+    const adminRequiredPartyFields = Object.keys(adminCaseFieldLabels).filter((name) => name !== "complainant_age");
+    const adminLettersOnlyFields = ["case_title", "complainant_title", "complainant_full_name", "complainant_religion", "respondent_full_name"];
+    const adminExactDigitFields = {
+        complainant_contact_number: 11,
+        respondent_contact_number: 11,
+    };
+    const adminValidComplainantStatuses = new Set(["Single", "Married", "Widowed", "Separated"]);
+    const adminComplainantStatusChoices = [
+        { value: "", label: "Select status" },
+        { value: "Single", label: "Single" },
+        { value: "Married", label: "Married" },
+        { value: "Widowed", label: "Widowed" },
+        { value: "Separated", label: "Separated" },
+    ];
+    const sanitizeAdminLettersUppercase = (value) => String(value || "").replace(/[^\p{L}\s]/gu, "").replace(/\s{2,}/g, " ").toUpperCase();
+    const sanitizeAdminDigits = (value, maxLength = 11) => String(value || "").replace(/\D/g, "").slice(0, maxLength);
+    const hasAdminFourDigitDateYear = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+    const isAdminLettersOnly = (value) => /^[\p{L}\s]+$/u.test(String(value || "").trim());
+    const calculateAdminAgeFromBirthdate = (birthdate) => {
+        if (!birthdate) {
+            return "";
+        }
+
+        const birth = new Date(`${birthdate}T00:00:00`);
+        const today = new Date();
+
+        if (Number.isNaN(birth.getTime()) || birth > today) {
+            return "";
+        }
+
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDelta = today.getMonth() - birth.getMonth();
+
+        if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birth.getDate())) {
+            age -= 1;
+        }
+
+        return age >= 0 ? String(age) : "";
+    };
+    const applyAdminCaseInputSanitizers = (form) => {
+        adminLettersOnlyFields.forEach((name) => {
+            const field = form.elements[name];
+
+            if (field && !field.readOnly && !field.disabled) {
+                field.value = sanitizeAdminLettersUppercase(field.value);
+            }
+        });
+
+        Object.entries(adminExactDigitFields).forEach(([name, length]) => {
+            const field = form.elements[name];
+
+            if (field && !field.readOnly && !field.disabled) {
+                field.value = sanitizeAdminDigits(field.value, length);
+            }
+        });
+    };
 
     const normalizeAdminCaseStatusKey = (status) => {
         const value = String(status || "").trim().toLowerCase();
@@ -349,6 +442,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const validateAdminCaseRules = (form) => {
+        applyAdminCaseInputSanitizers(form);
+
         const errorsByName = new Map();
         const dateFiled = getAdminCaseFieldValue(form, "date_filed");
         const initialConfrontation = getAdminCaseFieldValue(form, "date_initial_confrontation");
@@ -356,6 +451,46 @@ document.addEventListener("DOMContentLoaded", () => {
         const executionDate = getAdminCaseFieldValue(form, "date_execution");
         const agreement = getAdminCaseFieldValue(form, "main_point_of_agreement");
         const status = normalizeAdminCaseStatusKey(getAdminCaseFieldValue(form, "case_status"));
+        const complainantBirthdate = getAdminCaseFieldValue(form, "complainant_birthdate");
+        const calculatedComplainantAge = calculateAdminAgeFromBirthdate(complainantBirthdate);
+
+        if (form.elements.complainant_age && calculatedComplainantAge !== "") {
+            form.elements.complainant_age.value = calculatedComplainantAge;
+        }
+
+        adminRequiredPartyFields.forEach((name) => {
+            if (getAdminCaseFieldValue(form, name) === "") {
+                addAdminCaseValidationError(form, errorsByName, name, `${adminCaseFieldLabels[name]} is required.`);
+            }
+        });
+
+        adminLettersOnlyFields.forEach((name) => {
+            const value = getAdminCaseFieldValue(form, name);
+
+            if (value !== "" && !isAdminLettersOnly(value)) {
+                addAdminCaseValidationError(form, errorsByName, name, `${adminCaseFieldLabels[name]} must contain letters only.`);
+            }
+        });
+
+        if (getAdminCaseFieldValue(form, "complainant_status") !== "" && !adminValidComplainantStatuses.has(getAdminCaseFieldValue(form, "complainant_status"))) {
+            addAdminCaseValidationError(form, errorsByName, "complainant_status", "Complainant Status must be Single, Married, Widowed, or Separated.");
+        }
+
+        if (complainantBirthdate && !hasAdminFourDigitDateYear(complainantBirthdate)) {
+            addAdminCaseValidationError(form, errorsByName, "complainant_birthdate", "Complainant Birthdate year must be exactly 4 digits.");
+        }
+
+        if (complainantBirthdate && calculatedComplainantAge === "") {
+            addAdminCaseValidationError(form, errorsByName, "complainant_birthdate", "Complainant Birthdate must be a valid past date.");
+        }
+
+        Object.entries(adminExactDigitFields).forEach(([name, length]) => {
+            const value = getAdminCaseFieldValue(form, name);
+
+            if (value !== "" && !new RegExp(`^\\d{${length}}$`).test(value)) {
+                addAdminCaseValidationError(form, errorsByName, name, `${adminCaseFieldLabels[name]} must be exactly ${length} digits.`);
+            }
+        });
 
         if (!status) {
             addAdminCaseValidationError(form, errorsByName, "case_status", "Select a valid case status.");
