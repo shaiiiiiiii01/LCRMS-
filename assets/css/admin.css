@@ -233,7 +233,12 @@ svg {
 }
 
 .admin-login-error {
-    margin: 0 0 18px;
+    position: absolute;
+    top: 18px;
+    right: 24px;
+    left: 24px;
+    z-index: 3;
+    margin: 0;
     padding: 12px 14px;
     border: 1px solid #ffd6da;
     border-radius: 8px;
@@ -241,6 +246,21 @@ svg {
     color: #c92d3a;
     font-weight: 800;
     text-align: center;
+    box-shadow: 0 12px 26px rgba(201, 45, 58, 0.14);
+    animation: loginErrorFade 4s ease forwards;
+}
+
+@keyframes loginErrorFade {
+    0%,
+    70% {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    100% {
+        opacity: 0;
+        visibility: hidden;
+    }
 }
 
 .admin-form-group {
@@ -742,6 +762,18 @@ body.admin-sidebar-collapsed .admin-sidebar {
     transform: translateX(-100%);
 }
 
+.admin-dashboard-page {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+.admin-dashboard-page .admin-content {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+}
+
 .admin-content {
     width: 100%;
     max-width: 100%;
@@ -885,7 +917,7 @@ body.admin-sidebar-collapsed .admin-sidebar {
 }
 
 .admin-welcome-banner {
-    --admin-welcome-cover-height: 40px;
+    --admin-welcome-cover-height: 64px;
     width: 100%;
     min-height: 128px;
     position: sticky;
@@ -3021,7 +3053,7 @@ body.admin-modal-open {
     }
 
     .admin-welcome-banner {
-        --admin-welcome-cover-height: 24px;
+        --admin-welcome-cover-height: 64px;
         top: 88px;
         padding: 22px;
     }

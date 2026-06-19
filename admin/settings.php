@@ -23,7 +23,7 @@ $initialUsersJson = htmlspecialchars(json_encode($initialUsers, JSON_HEX_APOS | 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/admin.css'); ?>">
 </head>
-<body>
+<body class="admin-dashboard-page">
     <div class="admin-layout admin-settings-layout">
         <?php include '../includes/admin_nav.php'; ?>
         <div class="admin-sidebar-backdrop" data-admin-sidebar-close></div>

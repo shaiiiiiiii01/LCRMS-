@@ -1,5 +1,8 @@
 <?php
 $footerStyle = $footerStyle ?? 'standard';
+$footerStatusDelayed = $footerStatusDelayed ?? false;
+$footerStatusText = $footerStatusDelayed ? 'Offline' : 'Online';
+$footerStatusClass = $footerStatusDelayed ? 'system-status-offline' : 'system-status-online';
 ?>
 
 <footer class="admin-footer <?php echo $footerStyle === 'compact' ? 'is-compact' : ''; ?>">
@@ -12,7 +15,7 @@ $footerStyle = $footerStyle ?? 'standard';
     <?php else: ?>
         <p>&copy; 2026 Barangay Old Cabalan. All Rights Reserved.</p>
         <div class="admin-footer-links">
-            <span>System Status: <span class="system-status-online">Online</span></span>
+            <span>System Status: <span class="<?php echo $footerStatusClass; ?>"<?php echo $footerStatusDelayed ? ' data-login-system-status' : ''; ?>><?php echo $footerStatusText; ?></span></span>
         </div>
     <?php endif; ?>
 </footer>

@@ -36,7 +36,7 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
     <title>Cases | LCRMS Admin</title>
     <link rel="stylesheet" href="../assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/admin.css'); ?>">
 </head>
-<body>
+<body class="admin-dashboard-page">
     <div class="admin-layout">
         <?php include '../includes/admin_nav.php'; ?>
         <div class="admin-sidebar-backdrop" data-admin-sidebar-close></div>

@@ -24,7 +24,7 @@ try {
     <title>Add New Case | LCRMS</title>
     <link rel="stylesheet" href="../assets/css/user.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/user.css'); ?>">
 </head>
-<body>
+<body class="user-dashboard-page">
     <div class="user-layout">
         <?php include '../includes/user_nav.php'; ?>
         <div class="sidebar-backdrop" data-sidebar-close></div>

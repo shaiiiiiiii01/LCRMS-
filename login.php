@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <img src="assets/images/oldcab_logo.png" alt="Barangay Old Cabalan logo" class="admin-login-logo">
                 <h1 id="adminLoginTitle">Log In to LCRMS</h1>
                 <p>Lupon Case and Record Management System</p>
-                <span class="portal-badge">LCRMS Portal</span>
+                <span class="portal-badge">LCRMS System</span>
             </div>
 
             <?php if ($error !== ''): ?>
@@ -173,10 +173,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
 
             <div class="admin-login-rule"></div>
-            <p class="admin-login-note">Authorized personnel only. All access and activity within this system are monitored and recorded.</p>
+            <p class="admin-login-note">Authorized personnel only. Unauthorized access is prohibited.</p>
         </section>
     </main>
 
+    <?php $footerStatusDelayed = true; ?>
     <?php include __DIR__ . '/includes/admin_footer.php'; ?>
 
     <div class="login-loading-screen" data-login-loading aria-live="polite" aria-hidden="true">
@@ -193,5 +194,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script src="assets/js/admin.js?v=<?php echo filemtime(__DIR__ . '/assets/js/admin.js'); ?>"></script>
+    <script>
+        window.setTimeout(function () {
+            var status = document.querySelector("[data-login-system-status]");
+
+            if (!status) {
+                return;
+            }
+
+            status.textContent = "Online";
+            status.classList.remove("system-status-offline");
+            status.classList.add("system-status-online");
+        }, 1000);
+    </script>
 </body>
 </html>

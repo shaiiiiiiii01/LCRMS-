@@ -45,7 +45,7 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
     <title>Admin Dashboard | LCRMS</title>
     <link rel="stylesheet" href="../assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/admin.css'); ?>">
 </head>
-<body>
+<body class="admin-dashboard-page">
     <div class="admin-layout">
         <?php include '../includes/admin_nav.php'; ?>
         <div class="admin-sidebar-backdrop" data-admin-sidebar-close></div>

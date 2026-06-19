@@ -73,7 +73,7 @@ function dashboard_entry_status_label(string $status): string
     <title>Dashboard | LCRMS</title>
     <link rel="stylesheet" href="../assets/css/user.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/user.css'); ?>">
 </head>
-<body class="user-dashboard-page">
+<body class="user-dashboard-page user-home-page">
     <div class="user-layout">
         <?php include '../includes/user_nav.php'; ?>
 
