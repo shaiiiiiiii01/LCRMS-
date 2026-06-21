@@ -215,15 +215,15 @@ $caseEnd = min($caseTotal, $caseStart + count($cases) - 1);
 
                     <div class="cases-pagination">
                         <div class="pagination-buttons">
-                            <button type="button" aria-label="Previous page" <?php echo $casePage <= 1 ? 'disabled' : 'data-case-page-url="' . htmlspecialchars(admin_case_page_url($casePage - 1, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES) . '" onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($casePage - 1, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
+                            <button type="button" aria-label="Previous page" <?php echo $casePage <= 1 ? 'disabled' : 'data-case-page-url="' . htmlspecialchars(admin_case_page_url($casePage - 1, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES) . '"'; ?>><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
                             <?php foreach (admin_case_pagination_pages($casePage, $caseTotalPages) as $page): ?>
                                 <?php if (is_string($page)): ?>
                                     <span>...</span>
                                 <?php else: ?>
-                                    <button class="<?php echo $page === $casePage ? 'is-active' : ''; ?>" type="button" data-case-page-url="<?php echo htmlspecialchars(admin_case_page_url((int) $page, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES); ?>" onclick="window.location.href='<?php echo htmlspecialchars(admin_case_page_url((int) $page, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES); ?>'"><?php echo $page; ?></button>
+                                    <button class="<?php echo $page === $casePage ? 'is-active' : ''; ?>" type="button" data-case-page-url="<?php echo htmlspecialchars(admin_case_page_url((int) $page, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES); ?>"><?php echo $page; ?></button>
                                 <?php endif; ?>
                             <?php endforeach; ?>
-                            <button type="button" aria-label="Next page" <?php echo $casePage >= $caseTotalPages ? 'disabled' : 'data-case-page-url="' . htmlspecialchars(admin_case_page_url($casePage + 1, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES) . '" onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($casePage + 1, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
+                            <button type="button" aria-label="Next page" <?php echo $casePage >= $caseTotalPages ? 'disabled' : 'data-case-page-url="' . htmlspecialchars(admin_case_page_url($casePage + 1, $caseSearch, $caseStatus, $caseDateFilter, $caseDateValue), ENT_QUOTES) . '"'; ?>><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
                         </div>
                     </div>
 

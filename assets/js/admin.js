@@ -309,6 +309,14 @@ document.addEventListener("DOMContentLoaded", () => {
         respondent_contact_number: "Respondent Contact Number",
     };
     const adminRequiredPartyFields = Object.keys(adminCaseFieldLabels).filter((name) => name !== "complainant_age");
+    const adminRequiredCaseFields = [
+        "case_title",
+        "complainant_title",
+        "nature_of_case",
+        "date_filed",
+        "detailed_case_description",
+        ...adminRequiredPartyFields,
+    ];
     const adminLettersOnlyFields = ["case_title", "complainant_title", "complainant_full_name", "complainant_religion", "respondent_full_name"];
     const adminExactDigitFields = {
         complainant_contact_number: 11,
@@ -326,6 +334,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const sanitizeAdminDigits = (value, maxLength = 11) => String(value || "").replace(/\D/g, "").slice(0, maxLength);
     const hasAdminFourDigitDateYear = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
     const isAdminLettersOnly = (value) => /^[\p{L}\s]+$/u.test(String(value || "").trim());
+    const markRequiredAdminCaseLabels = (root = document) => {
+        adminRequiredCaseFields.forEach((name) => {
+            const field = root.querySelector(`[name="${name}"]`);
+            const label = field?.closest(".form-group")?.querySelector("label");
+
+            label?.classList.add("is-required");
+        });
+    };
+
     const calculateAdminAgeFromBirthdate = (birthdate) => {
         if (!birthdate) {
             return "";
@@ -651,12 +668,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Basic filing details used to classify and locate the case record.",
                 [
                     createAdminCaseDetailField("Case Number", caseData.case_number),
-                    createAdminCaseDetailField("Case Title", caseData.case_title, { name: "case_title", editable: false, wide: true }),
-                    createAdminCaseDetailField("Complainant Title", caseData.complainant_title, { name: "complainant_title", editable: false }),
+                    createAdminCaseDetailField("Case Title", caseData.case_title, { name: "case_title", editable: true, wide: true }),
+                    createAdminCaseDetailField("Complainant Title", caseData.complainant_title, { name: "complainant_title", editable: true }),
                     createAdminCaseDetailField("Nature of Case", caseData.nature_of_case, {
                         type: "choice-boxes",
                         name: "nature_of_case",
-                        editable: false,
+                        editable: true,
                         choices: [
                             { value: "Civil", label: "Civil" },
                             { value: "Criminal", label: "Criminal" },
@@ -668,31 +685,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Complainant Information",
                 "Additional personal details for the complainant record.",
                 [
-                    createAdminCaseDetailField("Full Name", caseData.complainant_full_name),
-                    createAdminCaseDetailField("Address", caseData.complainant_address, { wide: true }),
-                    createAdminCaseDetailField("Status", caseData.complainant_status),
-                    createAdminCaseDetailField("Religion", caseData.complainant_religion),
-                    createAdminCaseDetailField("Birthdate", caseData.complainant_birthdate, { type: "date" }),
-                    createAdminCaseDetailField("Age", caseData.complainant_age),
-                    createAdminCaseDetailField("Government ID", caseData.complainant_government_id),
-                    createAdminCaseDetailField("Contact Number", caseData.complainant_contact_number),
+                    createAdminCaseDetailField("Full Name", caseData.complainant_full_name, { name: "complainant_full_name", editable: true }),
+                    createAdminCaseDetailField("Address", caseData.complainant_address, { name: "complainant_address", editable: true, wide: true }),
+                    createAdminCaseDetailField("Status", caseData.complainant_status, { type: "select", name: "complainant_status", editable: true, choices: adminComplainantStatusChoices }),
+                    createAdminCaseDetailField("Religion", caseData.complainant_religion, { name: "complainant_religion", editable: true }),
+                    createAdminCaseDetailField("Birthdate", caseData.complainant_birthdate, { type: "date", name: "complainant_birthdate", editable: true, ageSource: "complainant_age" }),
+                    createAdminCaseDetailField("Age", caseData.complainant_age, { name: "complainant_age", editable: false }),
+                    createAdminCaseDetailField("Government ID", caseData.complainant_government_id, { name: "complainant_government_id", editable: true, maxLength: 150 }),
+                    createAdminCaseDetailField("Contact Number", caseData.complainant_contact_number, { name: "complainant_contact_number", editable: true, numericOnly: true, exactDigits: 11 }),
                 ]
             ),
             createAdminCaseDetailSection(
                 "Respondent Information",
                 "Additional contact details for the respondent record.",
                 [
-                    createAdminCaseDetailField("Full Name", caseData.respondent_full_name),
-                    createAdminCaseDetailField("Contact Number", caseData.respondent_contact_number),
-                    createAdminCaseDetailField("Address", caseData.respondent_address, { wide: true }),
+                    createAdminCaseDetailField("Full Name", caseData.respondent_full_name, { name: "respondent_full_name", editable: true }),
+                    createAdminCaseDetailField("Contact Number", caseData.respondent_contact_number, { name: "respondent_contact_number", editable: true, numericOnly: true, exactDigits: 11 }),
+                    createAdminCaseDetailField("Address", caseData.respondent_address, { name: "respondent_address", editable: true, wide: true }),
                 ]
             ),
             createAdminCaseDetailSection(
                 "Schedule and Status",
                 "Filing dates, case movement, and current case status.",
                 [
-                    createAdminCaseDetailField("Date Filed", caseData.date_filed, { type: "date", name: "date_filed", editable: false }),
-                    createAdminCaseDetailField("Date of Initial Confrontation", caseData.date_initial_confrontation, { type: "date", name: "date_initial_confrontation", editable: false }),
+                    createAdminCaseDetailField("Date Filed", caseData.date_filed, { type: "date", name: "date_filed", editable: true }),
+                    createAdminCaseDetailField("Date of Initial Confrontation", caseData.date_initial_confrontation, { type: "date", name: "date_initial_confrontation", editable: true }),
                     createAdminCaseDetailField("Case Status", caseStatusValue, { type: "select", name: "case_status", editable: true, choices: statusChoices }),
                     createAdminCaseDetailField("Date of Settlement / Award", caseData.date_settlement_award, { type: "date", name: "date_settlement_award", editable: true }),
                     createAdminCaseDetailField("Date of Execution", caseData.date_execution, { type: "date", name: "date_execution", editable: true }),
@@ -703,7 +720,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Case Narrative",
                 "Documented incident details and agreement reached during proceedings.",
                 [
-                    createAdminCaseDetailField("Detailed Case Description", caseData.detailed_case_description, { type: "textarea", name: "detailed_case_description", editable: false, wide: true }),
+                    createAdminCaseDetailField("Detailed Case Description", caseData.detailed_case_description, { type: "textarea", name: "detailed_case_description", editable: true, wide: true }),
                     createAdminCaseDetailField("Main Point of Agreement", caseData.main_point_of_agreement, { type: "textarea", name: "main_point_of_agreement", editable: true, wide: true }),
                 ],
                 "section-grid narrative-grid"
@@ -712,6 +729,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         actions.append(printLink, saveButton);
         form.append(grid, feedback, actions);
+        markRequiredAdminCaseLabels(form);
 
         const validateLiveAdminCaseForm = () => {
             clearAdminCaseFieldErrors(form);
@@ -719,7 +737,7 @@ document.addEventListener("DOMContentLoaded", () => {
             validateAdminCaseRules(form);
         };
 
-        ["date_settlement_award", "date_execution", "case_status", "main_point_of_agreement"].forEach((name) => {
+        ["date_filed", "date_initial_confrontation", "date_settlement_award", "date_execution", "case_status", "main_point_of_agreement", "complainant_birthdate"].forEach((name) => {
             const field = form.elements[name];
 
             if (!field) {
@@ -1242,6 +1260,154 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
+    const initializePaginationScrollRestore = (root = document) => {
+        root.querySelectorAll(".dashboard-pagination .pagination-buttons button[onclick]").forEach((button) => {
+            if (button.dataset.paginationScrollReady === "true") {
+                return;
+            }
+
+            const urlMatch = button.getAttribute("onclick")?.match(/window\.location\.href='([^']+)'/);
+
+            if (!urlMatch) {
+                return;
+            }
+
+            button.dataset.paginationScrollReady = "true";
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                sessionStorage.setItem("adminPaginationScrollY", String(window.scrollY));
+                window.location.href = urlMatch[1];
+            }, true);
+        });
+    };
+
+    const restorePaginationScroll = () => {
+        const scrollY = sessionStorage.getItem("adminPaginationScrollY");
+
+        if (scrollY === null) {
+            return;
+        }
+
+        sessionStorage.removeItem("adminPaginationScrollY");
+        window.scrollTo({ top: Number(scrollY) || 0, behavior: "auto" });
+    };
+
+    let selectedDashboardCaseId = "";
+
+    const initializeDashboardCaseSelection = (root = document) => {
+        const dashboardViewButton = document.querySelector("[data-dashboard-view-selected]");
+
+        root.querySelectorAll("[data-dashboard-case-row]").forEach((row) => {
+            if (row.dataset.dashboardSelectionReady === "true") {
+                return;
+            }
+
+            row.dataset.dashboardSelectionReady = "true";
+            const selectDashboardCaseRow = () => {
+                selectedDashboardCaseId = row.dataset.caseId || "";
+
+                document.querySelectorAll("[data-dashboard-case-row]").forEach((item) => {
+                    const isSelected = item === row;
+                    item.classList.toggle("is-selected", isSelected);
+                    item.setAttribute("aria-selected", isSelected ? "true" : "false");
+                });
+
+                if (dashboardViewButton) {
+                    dashboardViewButton.disabled = selectedDashboardCaseId === "";
+                }
+            };
+
+            const openDashboardCaseDetails = () => {
+                selectDashboardCaseRow();
+
+                if (selectedDashboardCaseId) {
+                    openAdminCaseDetailsModal(selectedDashboardCaseId, "cases_api.php");
+                }
+            };
+
+            row.addEventListener("click", openDashboardCaseDetails);
+            row.addEventListener("keydown", (event) => {
+                if (event.key !== "Enter" && event.key !== " ") {
+                    return;
+                }
+
+                event.preventDefault();
+                openDashboardCaseDetails();
+            });
+        });
+    };
+
+    const refreshDashboardCases = async (sourceUrl) => {
+        const card = document.querySelector(".dashboard-cases-card");
+        const nextUrl = new URL(sourceUrl, window.location.href);
+
+        if (!card) {
+            window.location.href = nextUrl;
+            return;
+        }
+
+        const currentTable = card.querySelector(".dashboard-table-wrap");
+        const currentPagination = card.querySelector(".dashboard-pagination");
+
+        currentTable?.classList.add("is-refreshing");
+        currentPagination?.classList.add("is-refreshing");
+
+        try {
+            const response = await fetch(nextUrl, {
+                headers: {
+                    Accept: "text/html",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Unable to load dashboard cases.");
+            }
+
+            const html = await response.text();
+            const nextDocument = new DOMParser().parseFromString(html, "text/html");
+            const nextTable = nextDocument.querySelector(".dashboard-table-wrap");
+            const nextPagination = nextDocument.querySelector(".dashboard-pagination");
+
+            if (!nextTable || !nextPagination || !currentTable || !currentPagination) {
+                throw new Error("Dashboard cases were not found.");
+            }
+
+            currentTable.replaceWith(nextTable);
+            currentPagination.replaceWith(nextPagination);
+            selectedDashboardCaseId = "";
+            const dashboardViewButton = document.querySelector("[data-dashboard-view-selected]");
+
+            if (dashboardViewButton) {
+                dashboardViewButton.disabled = true;
+            }
+
+            initializeDashboardCaseSelection(card);
+            initializeDashboardPagination(card);
+            window.history.pushState({}, "", `${nextUrl.pathname}${nextUrl.search}`);
+        } catch (error) {
+            window.location.href = nextUrl;
+        } finally {
+            currentTable?.classList.remove("is-refreshing");
+            currentPagination?.classList.remove("is-refreshing");
+        }
+    };
+
+    const initializeDashboardPagination = (root = document) => {
+        root.querySelectorAll("[data-dashboard-page-url]").forEach((button) => {
+            if (button.dataset.dashboardPaginationReady === "true") {
+                return;
+            }
+
+            button.dataset.dashboardPaginationReady = "true";
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                refreshDashboardCases(button.dataset.dashboardPageUrl || window.location.href);
+            });
+        });
+    };
+
     const updateCaseFilterCards = (status) => {
         const form = document.querySelector("[data-admin-case-filters]");
         const hasSearchFilter = Array.from(form?.querySelectorAll("[data-admin-case-search]") || []).some((input) => input.value.trim() !== "");
@@ -1298,6 +1464,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 initializeAdminCaseFilters(casesPanel);
                 initializeAdminCaseRows(casesPanel);
                 initializeAdminCasePagination(casesPanel);
+                initializePaginationScrollRestore(casesPanel);
                 initializeCaseImport();
                 casesPanel.dataset.caseListUrl = `${nextUrl.pathname}${nextUrl.search}`;
                 window.history.pushState({}, "", `${nextUrl.pathname}${nextUrl.search}#caseSearch`);
@@ -1310,37 +1477,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    restorePaginationScroll();
     initializeAdminCaseFilters();
     initializeAdminCasePagination();
+    initializePaginationScrollRestore();
+    initializeDashboardPagination();
+    initializeDashboardCaseSelection();
     initializeCaseImport();
-
-    const dashboardCaseRows = document.querySelectorAll("[data-dashboard-case-row]");
     const dashboardViewButton = document.querySelector("[data-dashboard-view-selected]");
-    let selectedDashboardCaseId = "";
-
-    const selectDashboardCaseRow = (row) => {
-        selectedDashboardCaseId = row.dataset.caseId || "";
-
-        dashboardCaseRows.forEach((item) => {
-            const isSelected = item === row;
-            item.classList.toggle("is-selected", isSelected);
-            item.setAttribute("aria-selected", isSelected ? "true" : "false");
-        });
-
-        if (dashboardViewButton) {
-            dashboardViewButton.disabled = selectedDashboardCaseId === "";
-        }
-    };
-
-    dashboardCaseRows.forEach((row) => {
-        row.addEventListener("click", () => selectDashboardCaseRow(row));
-        row.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                selectDashboardCaseRow(row);
-            }
-        });
-    });
 
     if (dashboardViewButton) {
         dashboardViewButton.addEventListener("click", () => {

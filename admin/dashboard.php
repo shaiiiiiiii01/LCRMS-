@@ -216,15 +216,15 @@ $dashboardExportUrl = 'export_cases.php' . ($dashboardExportParams === [] ? '' :
 
                         <div class="dashboard-pagination">
                             <div class="pagination-buttons">
-                                <button type="button" aria-label="Previous page" <?php echo $dashboardPage <= 1 ? 'disabled' : 'onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($dashboardPage - 1, $dashboardSearch, $dashboardStatus), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
+                                <button type="button" aria-label="Previous page" <?php echo $dashboardPage <= 1 ? 'disabled' : 'data-dashboard-page-url="' . htmlspecialchars(admin_case_page_url($dashboardPage - 1, $dashboardSearch, $dashboardStatus), ENT_QUOTES) . '"'; ?>><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button>
                                 <?php foreach (admin_case_pagination_pages($dashboardPage, $dashboardTotalPages) as $page): ?>
                                     <?php if (is_string($page)): ?>
                                         <span>...</span>
                                     <?php else: ?>
-                                        <button class="<?php echo $page === $dashboardPage ? 'is-active' : ''; ?>" type="button" onclick="window.location.href='<?php echo htmlspecialchars(admin_case_page_url((int) $page, $dashboardSearch, $dashboardStatus), ENT_QUOTES); ?>'"><?php echo $page; ?></button>
+                                        <button class="<?php echo $page === $dashboardPage ? 'is-active' : ''; ?>" type="button" data-dashboard-page-url="<?php echo htmlspecialchars(admin_case_page_url((int) $page, $dashboardSearch, $dashboardStatus), ENT_QUOTES); ?>"><?php echo $page; ?></button>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
-                                <button type="button" aria-label="Next page" <?php echo $dashboardPage >= $dashboardTotalPages ? 'disabled' : 'onclick="window.location.href=\'' . htmlspecialchars(admin_case_page_url($dashboardPage + 1, $dashboardSearch, $dashboardStatus), ENT_QUOTES) . '\'"'; ?>><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
+                                <button type="button" aria-label="Next page" <?php echo $dashboardPage >= $dashboardTotalPages ? 'disabled' : 'data-dashboard-page-url="' . htmlspecialchars(admin_case_page_url($dashboardPage + 1, $dashboardSearch, $dashboardStatus), ENT_QUOTES) . '"'; ?>><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button>
                             </div>
                         </div>
                     </div>

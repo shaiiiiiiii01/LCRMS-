@@ -1882,6 +1882,13 @@ body.sidebar-collapsed .user-sidebar {
     font-weight: 700;
 }
 
+.case-form-grid label.is-required::after,
+.case-choice-label.is-required::after {
+    content: " *";
+    color: #e11d48;
+    font-weight: 900;
+}
+
 .case-choice-label {
     color: #151a23;
     font-size: 14px;
@@ -1896,6 +1903,11 @@ body.sidebar-collapsed .user-sidebar {
     background: #fff;
     color: #242b36;
     transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.case-form-grid textarea {
+    resize: none;
+    overflow: hidden;
 }
 
 .case-form-grid input.is-invalid,

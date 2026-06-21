@@ -1,8 +1,9 @@
 <?php
 $footerStyle = $footerStyle ?? 'standard';
 $footerStatusDelayed = $footerStatusDelayed ?? false;
-$footerStatusText = $footerStatusDelayed ? 'Offline' : 'Online';
-$footerStatusClass = $footerStatusDelayed ? 'system-status-offline' : 'system-status-online';
+$footerStatusLabel = $footerStatusLabel ?? '';
+$footerStatusText = $footerStatusText ?? 'LCRMS_v1.0.0';
+$footerStatusClass = $footerStatusClass ?? '';
 ?>
 
 <footer class="admin-footer <?php echo $footerStyle === 'compact' ? 'is-compact' : ''; ?>">
@@ -15,7 +16,7 @@ $footerStatusClass = $footerStatusDelayed ? 'system-status-offline' : 'system-st
     <?php else: ?>
         <p>&copy; 2026 Barangay Old Cabalan. All Rights Reserved.</p>
         <div class="admin-footer-links">
-            <span>System Status: <span class="<?php echo $footerStatusClass; ?>"<?php echo $footerStatusDelayed ? ' data-login-system-status' : ''; ?>><?php echo $footerStatusText; ?></span></span>
+            <span><?php echo htmlspecialchars($footerStatusLabel); ?><span class="<?php echo htmlspecialchars($footerStatusClass); ?>"><?php echo htmlspecialchars($footerStatusText); ?></span></span>
         </div>
     <?php endif; ?>
 </footer>

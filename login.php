@@ -177,7 +177,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </section>
     </main>
 
-    <?php $footerStatusDelayed = true; ?>
     <?php include __DIR__ . '/includes/admin_footer.php'; ?>
 
     <div class="login-loading-screen" data-login-loading aria-live="polite" aria-hidden="true">
@@ -194,18 +193,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script src="assets/js/admin.js?v=<?php echo filemtime(__DIR__ . '/assets/js/admin.js'); ?>"></script>
-    <script>
-        window.setTimeout(function () {
-            var status = document.querySelector("[data-login-system-status]");
-
-            if (!status) {
-                return;
-            }
-
-            status.textContent = "Online";
-            status.classList.remove("system-status-offline");
-            status.classList.add("system-status-online");
-        }, 1000);
-    </script>
 </body>
 </html>

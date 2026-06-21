@@ -733,13 +733,28 @@ class CaseModel
             ];
         }
 
-        $caseTitle = trim((string) ($existingCase['case_title'] ?? ''));
-        $complainantTitle = trim((string) ($existingCase['complainant_title'] ?? ''));
-        $natureOfCase = $this->normalizeNatureOfCase((string) ($existingCase['nature_of_case'] ?? ''));
-        $dateFiledInput = trim((string) ($existingCase['date_filed'] ?? ''));
-        $initialConfrontationInput = trim((string) ($existingCase['date_initial_confrontation'] ?? ''));
-        $details = trim((string) ($existingCase['detailed_case_description'] ?? ''));
+        $caseTitleInput = trim((string) ($payload['case_title'] ?? $existingCase['case_title'] ?? ''));
+        $complainantTitleInput = trim((string) ($payload['complainant_title'] ?? $existingCase['complainant_title'] ?? ''));
+        $caseTitle = $this->normalizeLettersUppercase($caseTitleInput);
+        $complainantTitle = $this->normalizeLettersUppercase($complainantTitleInput);
+        $natureOfCase = $this->normalizeNatureOfCase((string) ($payload['nature_of_case'] ?? $existingCase['nature_of_case'] ?? ''));
+        $dateFiledInput = trim((string) ($payload['date_filed'] ?? $existingCase['date_filed'] ?? ''));
+        $initialConfrontationInput = trim((string) ($payload['date_initial_confrontation'] ?? $existingCase['date_initial_confrontation'] ?? ''));
+        $details = trim((string) ($payload['detailed_case_description'] ?? $existingCase['detailed_case_description'] ?? ''));
         $agreement = trim((string) ($payload['main_point_of_agreement'] ?? ''));
+        $complainantFullNameInput = trim((string) ($payload['complainant_full_name'] ?? $existingCase['complainant_full_name'] ?? ''));
+        $complainantReligionInput = trim((string) ($payload['complainant_religion'] ?? $existingCase['complainant_religion'] ?? ''));
+        $respondentFullNameInput = trim((string) ($payload['respondent_full_name'] ?? $existingCase['respondent_full_name'] ?? ''));
+        $complainantFullName = $this->normalizeLettersUppercase($complainantFullNameInput);
+        $complainantAddress = trim((string) ($payload['complainant_address'] ?? $existingCase['complainant_address'] ?? ''));
+        $complainantStatus = $this->normalizeComplainantStatus((string) ($payload['complainant_status'] ?? $existingCase['complainant_status'] ?? ''));
+        $complainantReligion = $this->normalizeLettersUppercase($complainantReligionInput);
+        $complainantBirthdateInput = trim((string) ($payload['complainant_birthdate'] ?? $existingCase['complainant_birthdate'] ?? ''));
+        $complainantGovernmentId = trim((string) ($payload['complainant_government_id'] ?? $existingCase['complainant_government_id'] ?? ''));
+        $complainantContactNumber = $this->normalizeDigits((string) ($payload['complainant_contact_number'] ?? $existingCase['complainant_contact_number'] ?? ''));
+        $respondentFullName = $this->normalizeLettersUppercase($respondentFullNameInput);
+        $respondentAddress = trim((string) ($payload['respondent_address'] ?? $existingCase['respondent_address'] ?? ''));
+        $respondentContactNumber = $this->normalizeDigits((string) ($payload['respondent_contact_number'] ?? $existingCase['respondent_contact_number'] ?? ''));
         $caseStatus = $this->normalizeStatus((string) ($payload['case_status'] ?? ''));
         $currentStatus = $this->normalizeStatus((string) ($existingCase['case_status'] ?? ''));
         $errors = [];
@@ -766,11 +781,56 @@ class CaseModel
             $errors[] = 'Detailed Case Description is required.';
         }
 
+        $partyRequiredFields = [
+            'Complainant Full Name' => $complainantFullName,
+            'Complainant Address' => $complainantAddress,
+            'Complainant Status' => $complainantStatus,
+            'Complainant Religion' => $complainantReligion,
+            'Complainant Birthdate' => $complainantBirthdateInput,
+            'Complainant Government ID' => $complainantGovernmentId,
+            'Complainant Contact Number' => $complainantContactNumber,
+            'Respondent Full Name' => $respondentFullName,
+            'Respondent Address' => $respondentAddress,
+            'Respondent Contact Number' => $respondentContactNumber,
+        ];
+
+        foreach ($partyRequiredFields as $label => $value) {
+            if ($value === '') {
+                $errors[] = "{$label} is required.";
+            }
+        }
+
+        $this->validateLettersOnly($caseTitleInput, 'Case Title', $errors);
+        $this->validateLettersOnly($complainantTitleInput, 'Complainant Title', $errors);
+        $this->validateLettersOnly($complainantFullNameInput, 'Complainant Full Name', $errors);
+        $this->validateLettersOnly($complainantReligionInput, 'Complainant Religion', $errors);
+        $this->validateLettersOnly($respondentFullNameInput, 'Respondent Full Name', $errors);
+        $this->validateMaxLength($complainantAddress, 'Complainant Address', 255, $errors);
+        $this->validateMaxLength($respondentAddress, 'Respondent Address', 255, $errors);
+        $this->validateMaxLength($complainantGovernmentId, 'Complainant Government ID', 150, $errors);
+        $this->validateExactDigits($complainantContactNumber, 'Complainant Contact Number', 11, $errors);
+        $this->validateExactDigits($respondentContactNumber, 'Respondent Contact Number', 11, $errors);
+
+        if ($complainantStatus !== '' && !in_array($complainantStatus, self::COMPLAINANT_STATUS_OPTIONS, true)) {
+            $errors[] = 'Complainant Status must be Single, Married, Widowed, or Separated.';
+        }
+
+        if ($complainantBirthdateInput !== '' && !$this->hasFourDigitDateYear($complainantBirthdateInput)) {
+            $errors[] = 'Complainant Birthdate year must be exactly 4 digits.';
+        }
+
         if (!in_array($caseStatus, $this->workflowStatuses(), true)) {
             $errors[] = 'Select a valid case status.';
         }
 
         $dateFiled = $this->parseRequiredDate($dateFiledInput, 'Date Filed', $errors);
+        $complainantBirthdate = $this->parseRequiredDate($complainantBirthdateInput, 'Complainant Birthdate', $errors);
+        $complainantAge = $this->calculateAge($complainantBirthdate);
+
+        if ($complainantBirthdate !== null && $complainantAge === null) {
+            $errors[] = 'Complainant Birthdate must be a valid past date.';
+        }
+
         $initialConfrontation = $this->parseOptionalDate($initialConfrontationInput, 'Date of Initial Confrontation', $errors);
         $settlementAward = $this->parseOptionalDate((string) ($payload['date_settlement_award'] ?? ''), 'Date of Settlement / Award', $errors);
         $executionDate = $this->parseOptionalDate((string) ($payload['date_execution'] ?? ''), 'Date of Execution', $errors);
@@ -801,7 +861,18 @@ class CaseModel
                 date_settlement_award = ?,
                 date_execution = ?,
                 detailed_case_description = ?,
-                main_point_of_agreement = ?
+                main_point_of_agreement = ?,
+                complainant_full_name = ?,
+                complainant_address = ?,
+                complainant_status = ?,
+                complainant_religion = ?,
+                complainant_birthdate = ?,
+                complainant_age = ?,
+                complainant_government_id = ?,
+                complainant_contact_number = ?,
+                respondent_full_name = ?,
+                respondent_contact_number = ?,
+                respondent_address = ?
             WHERE ' . $this->casePrimaryKeyColumn() . ' = ?
             LIMIT 1'
         );
@@ -818,7 +889,7 @@ class CaseModel
 
         mysqli_stmt_bind_param(
             $stmt,
-            'ssssssssssi',
+            'sssssssssssssssisssssi',
             $caseTitle,
             $complainantTitle,
             $natureOfCase,
@@ -829,6 +900,17 @@ class CaseModel
             $executionDate,
             $details,
             $agreement,
+            $complainantFullName,
+            $complainantAddress,
+            $complainantStatus,
+            $complainantReligion,
+            $complainantBirthdate,
+            $complainantAge,
+            $complainantGovernmentId,
+            $complainantContactNumber,
+            $respondentFullName,
+            $respondentContactNumber,
+            $respondentAddress,
             $id
         );
 

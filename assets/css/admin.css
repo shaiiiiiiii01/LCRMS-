@@ -3873,6 +3873,13 @@ body.admin-modal-open {
     font-weight: 800;
 }
 
+.case-form-grid label.is-required::after,
+.case-choice-label.is-required::after {
+    content: " *";
+    color: #e11d48;
+    font-weight: 900;
+}
+
 .case-choice-label {
     color: #2f5278;
     font-size: .82rem;
@@ -3889,7 +3896,12 @@ body.admin-modal-open {
     color: #16395f;
     font: inherit;
     padding: 11px 12px;
-    resize: vertical;
+}
+
+.case-form-grid textarea {
+    min-height: 122px;
+    resize: none;
+    overflow: hidden;
 }
 
 .case-form-grid input.is-invalid,

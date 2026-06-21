@@ -137,6 +137,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const sanitizeDigits = (value, maxLength = 11) => String(value || "").replace(/\D/g, "").slice(0, maxLength);
     const hasFourDigitDateYear = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
     const isLettersOnly = (value) => /^[\p{L}\s]+$/u.test(String(value || "").trim());
+    const markRequiredCaseLabels = (root = document) => {
+        requiredCaseFields.forEach((name) => {
+            const field = root.querySelector(`[name="${name}"]`);
+            const label = field?.closest(".form-group")?.querySelector("label");
+
+            label?.classList.add("is-required");
+        });
+    };
+
+    markRequiredCaseLabels();
+
     const applyCaseInputSanitizers = (form) => {
         lettersOnlyFields.forEach((name) => {
             const field = form.elements[name];
