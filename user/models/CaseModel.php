@@ -738,6 +738,21 @@ class CaseModel
         $natureOfCase = $this->normalizeNatureOfCase((string) ($existingCase['nature_of_case'] ?? ''));
         $dateFiledInput = trim((string) ($existingCase['date_filed'] ?? ''));
         $initialConfrontationInput = trim((string) ($existingCase['date_initial_confrontation'] ?? ''));
+        $settlementAwardInput = trim((string) ($existingCase['date_settlement_award'] ?? ''));
+        $executionDateInput = trim((string) ($existingCase['date_execution'] ?? ''));
+
+        if ($initialConfrontationInput === '') {
+            $initialConfrontationInput = trim((string) ($payload['date_initial_confrontation'] ?? ''));
+        }
+
+        if ($settlementAwardInput === '') {
+            $settlementAwardInput = trim((string) ($payload['date_settlement_award'] ?? ''));
+        }
+
+        if ($executionDateInput === '') {
+            $executionDateInput = trim((string) ($payload['date_execution'] ?? ''));
+        }
+
         $details = trim((string) ($existingCase['detailed_case_description'] ?? ''));
         $agreement = trim((string) ($payload['main_point_of_agreement'] ?? ''));
         $caseStatus = $this->normalizeStatus((string) ($payload['case_status'] ?? ''));
@@ -772,8 +787,8 @@ class CaseModel
 
         $dateFiled = $this->parseRequiredDate($dateFiledInput, 'Date Filed', $errors);
         $initialConfrontation = $this->parseOptionalDate($initialConfrontationInput, 'Date of Initial Confrontation', $errors);
-        $settlementAward = $this->parseOptionalDate((string) ($payload['date_settlement_award'] ?? ''), 'Date of Settlement / Award', $errors);
-        $executionDate = $this->parseOptionalDate((string) ($payload['date_execution'] ?? ''), 'Date of Execution', $errors);
+        $settlementAward = $this->parseOptionalDate($settlementAwardInput, 'Date of Settlement / Award', $errors);
+        $executionDate = $this->parseOptionalDate($executionDateInput, 'Date of Execution', $errors);
         $this->validateStatusTransition($currentStatus, $caseStatus, $errors);
         $this->validateDateDependencies($dateFiled, $initialConfrontation, $settlementAward, $executionDate, $errors);
         $this->validateOutcomeRules($caseStatus, $settlementAward, $executionDate, $agreement, $errors);

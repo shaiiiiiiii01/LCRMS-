@@ -248,6 +248,11 @@ document.addEventListener("DOMContentLoaded", () => {
             field.dataset.ageSource = options.ageSource;
         }
 
+        if (options.locked) {
+            field.dataset.adminCaseDateLocked = "true";
+            field.title = "This date is locked after saving.";
+        }
+
         group.append(label, field);
 
         return group;
@@ -445,6 +450,14 @@ document.addEventListener("DOMContentLoaded", () => {
         setAdminCaseFieldError(field, message);
     };
 
+    const getAdminInitialConfrontationDependencyMessage = (dateFiled) => {
+        if (!dateFiled) {
+            return "Please enter Date Filed first.";
+        }
+
+        return "";
+    };
+
     const getAdminSettlementDependencyMessage = (dateFiled, initialConfrontation) => {
         if (!dateFiled && !initialConfrontation) {
             return "Please enter Date Filed and Initial Confrontation Date first.";
@@ -456,6 +469,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!initialConfrontation) {
             return "Initial Confrontation Date is required before settlement date.";
+        }
+
+        return "";
+    };
+
+    const getAdminExecutionDependencyMessage = (dateFiled, initialConfrontation, settlementAward) => {
+        if (!dateFiled && !initialConfrontation && !settlementAward) {
+            return "Please enter Date Filed, Initial Confrontation Date, and Settlement Date first.";
+        }
+
+        if (!dateFiled) {
+            return "Please enter Date Filed first.";
+        }
+
+        if (!initialConfrontation) {
+            return "Initial Confrontation Date is required before execution date.";
+        }
+
+        if (!settlementAward) {
+            return "Settlement date is required before execution date.";
         }
 
         return "";
@@ -524,8 +557,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        if (executionDate && !settlementAward) {
-            addAdminCaseValidationError(form, errorsByName, "date_execution", "Settlement date is required before execution date.");
+        if (executionDate) {
+            const message = getAdminExecutionDependencyMessage(dateFiled, initialConfrontation, settlementAward);
+
+            if (message) {
+                addAdminCaseValidationError(form, errorsByName, "date_execution", message);
+            }
         }
 
         if ((status === "settled" || settlementAward) && !agreement) {
@@ -565,20 +602,43 @@ document.addEventListener("DOMContentLoaded", () => {
         return Array.from(errorsByName.values());
     };
 
+    const setAdminCaseDateFieldDisabled = (field, disabled, message = "") => {
+        if (!field || field.dataset.adminCaseDateLocked === "true") {
+            return;
+        }
+
+        field.disabled = false;
+        field.readOnly = disabled;
+        field.title = disabled ? message : "";
+        field.dataset.adminCaseDateBlocked = disabled ? "true" : "false";
+        field.setAttribute("aria-disabled", disabled ? "true" : "false");
+    };
+
     const updateAdminCaseDateFieldAvailability = (form) => {
-        const dateFiled = getAdminCaseFieldValue(form, "date_filed");
-        const initialConfrontation = getAdminCaseFieldValue(form, "date_initial_confrontation");
-        const settlementAward = getAdminCaseFieldValue(form, "date_settlement_award");
+        const initialField = form.elements.date_initial_confrontation;
         const settlementField = form.elements.date_settlement_award;
         const executionField = form.elements.date_execution;
+        const dateFiled = getAdminCaseFieldValue(form, "date_filed");
+        let initialConfrontation = getAdminCaseFieldValue(form, "date_initial_confrontation");
+        let settlementAward = getAdminCaseFieldValue(form, "date_settlement_award");
 
-        if (settlementField) {
-            settlementField.disabled = !dateFiled || !initialConfrontation;
+        if (!dateFiled && initialField && initialField.dataset.adminCaseDateLocked !== "true" && initialField.value) {
+            initialField.value = "";
+            initialConfrontation = "";
         }
 
-        if (executionField) {
-            executionField.disabled = !dateFiled || !initialConfrontation || !settlementAward;
+        if ((!dateFiled || !initialConfrontation) && settlementField && settlementField.dataset.adminCaseDateLocked !== "true" && settlementField.value) {
+            settlementField.value = "";
+            settlementAward = "";
         }
+
+        if ((!dateFiled || !initialConfrontation || !settlementAward) && executionField && executionField.dataset.adminCaseDateLocked !== "true" && executionField.value) {
+            executionField.value = "";
+        }
+
+        setAdminCaseDateFieldDisabled(initialField, !dateFiled, getAdminInitialConfrontationDependencyMessage(dateFiled));
+        setAdminCaseDateFieldDisabled(settlementField, !dateFiled || !initialConfrontation, getAdminSettlementDependencyMessage(dateFiled, initialConfrontation));
+        setAdminCaseDateFieldDisabled(executionField, !dateFiled || !initialConfrontation || !settlementAward, getAdminExecutionDependencyMessage(dateFiled, initialConfrontation, settlementAward));
     };
 
     const showBlockedAdminCaseDateMessage = (form, name) => {
@@ -588,14 +648,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const settlementAward = getAdminCaseFieldValue(form, "date_settlement_award");
         let message = "";
 
-        if (!field) {
+        if (!field || field.dataset.adminCaseDateLocked === "true") {
             return false;
         }
 
-        if (name === "date_settlement_award") {
+        if (name === "date_initial_confrontation") {
+            message = getAdminInitialConfrontationDependencyMessage(dateFiled);
+        } else if (name === "date_settlement_award") {
             message = getAdminSettlementDependencyMessage(dateFiled, initialConfrontation);
-        } else if (name === "date_execution" && !settlementAward) {
-            message = "Settlement date is required before execution date.";
+        } else if (name === "date_execution") {
+            message = getAdminExecutionDependencyMessage(dateFiled, initialConfrontation, settlementAward);
         }
 
         if (!message) {
@@ -603,6 +665,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         setAdminCaseFieldError(field, message);
+        return true;
+    };
+
+    const preventBlockedAdminCaseDateEntry = (form, field, event = null) => {
+        if (field?.dataset.adminCaseDateBlocked !== "true") {
+            return false;
+        }
+
+        event?.preventDefault();
+        showBlockedAdminCaseDateMessage(form, field.name);
         return true;
     };
 
@@ -614,6 +686,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const printLink = document.createElement("a");
         const saveButton = document.createElement("button");
         const caseStatusValue = normalizeAdminCaseStatusValue(caseData.case_status);
+        const hasInitialConfrontation = Boolean(String(caseData.date_initial_confrontation || "").trim());
+        const hasSettlementAward = Boolean(String(caseData.date_settlement_award || "").trim());
+        const hasExecutionDate = Boolean(String(caseData.date_execution || "").trim());
 
         const statusChoices = [
             { value: "M", label: "M" },
@@ -691,11 +766,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Schedule and Status",
                 "Filing dates, case movement, and current case status.",
                 [
-                    createAdminCaseDetailField("Date Filed", caseData.date_filed, { type: "date", name: "date_filed", editable: false }),
-                    createAdminCaseDetailField("Date of Initial Confrontation", caseData.date_initial_confrontation, { type: "date", name: "date_initial_confrontation", editable: false }),
+                    createAdminCaseDetailField("Date Filed", caseData.date_filed, { type: "date", name: "date_filed", editable: false, locked: true }),
+                    createAdminCaseDetailField("Date of Initial Confrontation", caseData.date_initial_confrontation, { type: "date", name: "date_initial_confrontation", editable: !hasInitialConfrontation, locked: hasInitialConfrontation }),
                     createAdminCaseDetailField("Case Status", caseStatusValue, { type: "select", name: "case_status", editable: true, choices: statusChoices }),
-                    createAdminCaseDetailField("Date of Settlement / Award", caseData.date_settlement_award, { type: "date", name: "date_settlement_award", editable: true }),
-                    createAdminCaseDetailField("Date of Execution", caseData.date_execution, { type: "date", name: "date_execution", editable: true }),
+                    createAdminCaseDetailField("Date of Settlement / Award", caseData.date_settlement_award, { type: "date", name: "date_settlement_award", editable: !hasSettlementAward, locked: hasSettlementAward }),
+                    createAdminCaseDetailField("Date of Execution", caseData.date_execution, { type: "date", name: "date_execution", editable: !hasExecutionDate, locked: hasExecutionDate }),
                 ],
                 "date-status-grid"
             ),
@@ -719,25 +794,43 @@ document.addEventListener("DOMContentLoaded", () => {
             validateAdminCaseRules(form);
         };
 
-        ["date_settlement_award", "date_execution", "case_status", "main_point_of_agreement"].forEach((name) => {
+        ["date_initial_confrontation", "date_settlement_award", "date_execution", "case_status", "main_point_of_agreement"].forEach((name) => {
             const field = form.elements[name];
 
             if (!field) {
                 return;
             }
 
-            field.addEventListener("input", validateLiveAdminCaseForm);
-            field.addEventListener("change", validateLiveAdminCaseForm);
-            field.addEventListener("focus", () => {
-                if (showBlockedAdminCaseDateMessage(form, name)) {
+            const validateField = () => {
+                clearAdminCaseFieldErrors(form);
+                if (field.dataset.adminCaseDateBlocked === "true") {
+                    field.value = "";
+                    showBlockedAdminCaseDateMessage(form, name);
                     return;
                 }
 
-                validateLiveAdminCaseForm();
+                updateAdminCaseDateFieldAvailability(form);
+                validateAdminCaseRules(form);
+            };
+
+            field.addEventListener("input", validateField);
+            field.addEventListener("change", validateField);
+            field.addEventListener("mousedown", (event) => {
+                preventBlockedAdminCaseDateEntry(form, field, event);
+            });
+            field.addEventListener("keydown", (event) => {
+                preventBlockedAdminCaseDateEntry(form, field, event);
+            });
+            field.addEventListener("focus", () => {
+                if (preventBlockedAdminCaseDateEntry(form, field)) {
+                    return;
+                }
+
+                validateField();
             });
 
             field.closest(".form-group")?.addEventListener("click", () => {
-                if (field.disabled) {
+                if (field.dataset.adminCaseDateBlocked === "true") {
                     showBlockedAdminCaseDateMessage(form, name);
                 }
             });
