@@ -738,9 +738,23 @@ class CaseModel
         $caseTitle = $this->normalizeLettersUppercase($caseTitleInput);
         $complainantTitle = $this->normalizeLettersUppercase($complainantTitleInput);
         $natureOfCase = $this->normalizeNatureOfCase((string) ($payload['nature_of_case'] ?? $existingCase['nature_of_case'] ?? ''));
-        $dateFiledInput = trim((string) ($payload['date_filed'] ?? $existingCase['date_filed'] ?? ''));
-        $initialConfrontationInput = trim((string) ($payload['date_initial_confrontation'] ?? $existingCase['date_initial_confrontation'] ?? ''));
         $details = trim((string) ($payload['detailed_case_description'] ?? $existingCase['detailed_case_description'] ?? ''));
+        $dateFiledInput = trim((string) ($existingCase['date_filed'] ?? ''));
+        $initialConfrontationInput = trim((string) ($existingCase['date_initial_confrontation'] ?? ''));
+        $settlementAwardInput = trim((string) ($existingCase['date_settlement_award'] ?? ''));
+        $executionDateInput = trim((string) ($existingCase['date_execution'] ?? ''));
+
+        if ($initialConfrontationInput === '') {
+            $initialConfrontationInput = trim((string) ($payload['date_initial_confrontation'] ?? ''));
+        }
+
+        if ($settlementAwardInput === '') {
+            $settlementAwardInput = trim((string) ($payload['date_settlement_award'] ?? ''));
+        }
+
+        if ($executionDateInput === '') {
+            $executionDateInput = trim((string) ($payload['date_execution'] ?? ''));
+        }
         $agreement = trim((string) ($payload['main_point_of_agreement'] ?? ''));
         $complainantFullNameInput = trim((string) ($payload['complainant_full_name'] ?? $existingCase['complainant_full_name'] ?? ''));
         $complainantReligionInput = trim((string) ($payload['complainant_religion'] ?? $existingCase['complainant_religion'] ?? ''));
@@ -832,8 +846,8 @@ class CaseModel
         }
 
         $initialConfrontation = $this->parseOptionalDate($initialConfrontationInput, 'Date of Initial Confrontation', $errors);
-        $settlementAward = $this->parseOptionalDate((string) ($payload['date_settlement_award'] ?? ''), 'Date of Settlement / Award', $errors);
-        $executionDate = $this->parseOptionalDate((string) ($payload['date_execution'] ?? ''), 'Date of Execution', $errors);
+        $settlementAward = $this->parseOptionalDate($settlementAwardInput, 'Date of Settlement / Award', $errors);
+        $executionDate = $this->parseOptionalDate($executionDateInput, 'Date of Execution', $errors);
         $this->validateStatusTransition($currentStatus, $caseStatus, $errors);
         $this->validateDateDependencies($dateFiled, $initialConfrontation, $settlementAward, $executionDate, $errors);
         $this->validateOutcomeRules($caseStatus, $settlementAward, $executionDate, $agreement, $errors);

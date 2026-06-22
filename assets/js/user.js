@@ -701,6 +701,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const getCaseFormValue = (form, name) => getCaseFieldValue(form.elements[name]).trim();
 
+    const getInitialConfrontationDependencyMessage = (dateFiled) => {
+        if (!dateFiled) {
+            return "Please enter Date Filed first.";
+        }
+
+        return "";
+    };
+
     const getSettlementDependencyMessage = (dateFiled, initialConfrontation) => {
         if (!dateFiled && !initialConfrontation) {
             return "Please enter Date Filed and Initial Confrontation Date first.";
@@ -712,6 +720,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!initialConfrontation) {
             return "Initial Confrontation Date is required before settlement date.";
+        }
+
+        return "";
+    };
+
+    const getExecutionDependencyMessage = (dateFiled, initialConfrontation, settlementAward) => {
+        if (!dateFiled && !initialConfrontation && !settlementAward) {
+            return "Please enter Date Filed, Initial Confrontation Date, and Settlement Date first.";
+        }
+
+        if (!dateFiled) {
+            return "Please enter Date Filed first.";
+        }
+
+        if (!initialConfrontation) {
+            return "Initial Confrontation Date is required before execution date.";
+        }
+
+        if (!settlementAward) {
+            return "Settlement date is required before execution date.";
         }
 
         return "";
@@ -768,8 +796,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        if (initialConfrontation && !dateFiled) {
-            addCaseValidationError(form, errorsByName, "date_initial_confrontation", "Please enter Date Filed first.");
+        if (initialConfrontation) {
+            const message = getInitialConfrontationDependencyMessage(dateFiled);
+
+            if (message) {
+                addCaseValidationError(form, errorsByName, "date_initial_confrontation", message);
+            }
         }
 
         if (settlementAward) {
@@ -780,8 +812,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        if (executionDate && !settlementAward) {
-            addCaseValidationError(form, errorsByName, "date_execution", "Settlement date is required before execution date.");
+        if (executionDate) {
+            const message = getExecutionDependencyMessage(dateFiled, initialConfrontation, settlementAward);
+
+            if (message) {
+                addCaseValidationError(form, errorsByName, "date_execution", message);
+            }
         }
 
         if ((status === "settled" || settlementAward) && !agreement) {
@@ -821,25 +857,43 @@ document.addEventListener("DOMContentLoaded", () => {
         return Array.from(errorsByName.values());
     };
 
-    const updateCaseDateFieldAvailability = (form) => {
-        const dateFiled = getCaseFormValue(form, "date_filed");
-        const initialConfrontation = getCaseFormValue(form, "date_initial_confrontation");
-        const settlementAward = getCaseFormValue(form, "date_settlement_award");
+    const setCaseDateFieldDisabled = (field, disabled, message = "") => {
+        if (!field) {
+            return;
+        }
+
+        field.disabled = false;
+        field.readOnly = disabled;
+        field.title = disabled ? message : "";
+        field.dataset.caseDateBlocked = disabled ? "true" : "false";
+        field.setAttribute("aria-disabled", disabled ? "true" : "false");
+    };
+
+    const updateCaseDateFieldAvailability = (form, options = {}) => {
         const initialField = form.elements.date_initial_confrontation;
         const settlementField = form.elements.date_settlement_award;
         const executionField = form.elements.date_execution;
+        let dateFiled = getCaseFormValue(form, "date_filed");
+        let initialConfrontation = getCaseFormValue(form, "date_initial_confrontation");
+        let settlementAward = getCaseFormValue(form, "date_settlement_award");
 
-        if (initialField) {
-            initialField.disabled = !dateFiled;
+        if (!dateFiled && initialField && initialField.value && options.clearBlocked !== false) {
+            initialField.value = "";
+            initialConfrontation = "";
         }
 
-        if (settlementField) {
-            settlementField.disabled = !dateFiled || !initialConfrontation;
+        if ((!dateFiled || !initialConfrontation) && settlementField && settlementField.value && options.clearBlocked !== false) {
+            settlementField.value = "";
+            settlementAward = "";
         }
 
-        if (executionField) {
-            executionField.disabled = !dateFiled || !initialConfrontation || !settlementAward;
+        if ((!dateFiled || !initialConfrontation || !settlementAward) && executionField && executionField.value && options.clearBlocked !== false) {
+            executionField.value = "";
         }
+
+        setCaseDateFieldDisabled(initialField, !dateFiled, getInitialConfrontationDependencyMessage(dateFiled));
+        setCaseDateFieldDisabled(settlementField, !dateFiled || !initialConfrontation, getSettlementDependencyMessage(dateFiled, initialConfrontation));
+        setCaseDateFieldDisabled(executionField, !dateFiled || !initialConfrontation || !settlementAward, getExecutionDependencyMessage(dateFiled, initialConfrontation, settlementAward));
     };
 
     const showBlockedCaseDateMessage = (form, name) => {
@@ -853,12 +907,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return false;
         }
 
-        if (name === "date_initial_confrontation" && !dateFiled) {
-            message = "Please enter Date Filed first.";
+        if (name === "date_initial_confrontation") {
+            message = getInitialConfrontationDependencyMessage(dateFiled);
         } else if (name === "date_settlement_award") {
             message = getSettlementDependencyMessage(dateFiled, initialConfrontation);
-        } else if (name === "date_execution" && !settlementAward) {
-            message = "Settlement date is required before execution date.";
+        } else if (name === "date_execution") {
+            message = getExecutionDependencyMessage(dateFiled, initialConfrontation, settlementAward);
         }
 
         if (!message) {
@@ -866,6 +920,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         setCaseFieldError(field, message);
+        return true;
+    };
+
+    const preventBlockedCaseDateEntry = (form, field, event = null) => {
+        if (field?.dataset.caseDateBlocked !== "true") {
+            return false;
+        }
+
+        event?.preventDefault();
+        showBlockedCaseDateMessage(form, field.name);
         return true;
     };
 
@@ -968,14 +1032,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const validateField = () => {
                 clearCaseFieldErrors(form);
+                if (field.dataset.caseDateBlocked === "true") {
+                    field.value = "";
+                    showBlockedCaseDateMessage(form, name);
+                    return;
+                }
+
                 updateCaseDateFieldAvailability(form);
                 validateCaseRules(form);
             };
 
             field.addEventListener("input", validateField);
             field.addEventListener("change", validateField);
+            field.addEventListener("mousedown", (event) => {
+                preventBlockedCaseDateEntry(form, field, event);
+            });
+            field.addEventListener("keydown", (event) => {
+                preventBlockedCaseDateEntry(form, field, event);
+            });
             field.addEventListener("focus", () => {
-                if (showBlockedCaseDateMessage(form, name)) {
+                if (preventBlockedCaseDateEntry(form, field)) {
                     return;
                 }
 
@@ -983,13 +1059,13 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             getCaseDateShell(field)?.addEventListener("click", () => {
-                if (field.disabled) {
+                if (field.dataset.caseDateBlocked === "true") {
                     showBlockedCaseDateMessage(form, name);
                 }
             });
 
             getCaseFieldGroup(field)?.addEventListener("click", () => {
-                if (field.disabled) {
+                if (field.dataset.caseDateBlocked === "true") {
                     showBlockedCaseDateMessage(form, name);
                 }
             });
