@@ -571,7 +571,7 @@ svg {
     overflow-x: hidden;
     padding-left: 280px;
     background: var(--page);
-    transition: padding-left 180ms ease;
+    transition: padding-left 280ms ease;
 }
 
 .admin-sidebar {
@@ -592,7 +592,7 @@ svg {
     border-right: 1px solid rgba(151, 184, 214, 0.62);
     box-shadow: 14px 0 34px rgba(24, 35, 52, 0.08);
     z-index: 30;
-    transition: transform 180ms ease;
+    transition: transform 280ms ease;
 }
 
 .admin-sidebar-brand {
@@ -2972,7 +2972,7 @@ body.admin-modal-open {
         position: fixed;
         left: 0;
         transform: translateX(-100%);
-        transition: transform 180ms ease;
+        transition: transform 280ms ease;
     }
 
     body.admin-sidebar-collapsed .admin-sidebar {
@@ -3214,6 +3214,11 @@ body.admin-modal-open {
 /* Visily-style Admin Settings > User Management screen */
 .admin-settings-layout {
     background: #f6f8fa;
+    transition: padding-left 280ms ease;
+}
+
+.admin-settings-layout .admin-sidebar {
+    transition: transform 280ms ease;
 }
 
 .admin-settings-layout .admin-topbar {
@@ -3282,8 +3287,17 @@ body.admin-modal-open {
 }
 
 .users-main {
-    max-width: none;
-    padding: 19px 6px 24px 27px;
+    width: calc(100vw - 280px);
+    max-width: calc(100vw - 280px);
+    box-sizing: border-box;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 19px 27px 24px;
+}
+
+body.admin-sidebar-collapsed .admin-settings-layout .users-main {
+    width: calc(100vw - 280px);
+    max-width: calc(100vw - 280px);
 }
 
 .users-main .admin-toast {
@@ -3875,15 +3889,20 @@ body.admin-modal-open {
 
 .case-form-grid label.is-required::after,
 .case-choice-label.is-required::after {
-    content: " *";
+    content: "*";
     color: #e11d48;
     font-weight: 900;
 }
 
 .case-choice-label {
+    width: fit-content;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
     color: #2f5278;
     font-size: .82rem;
     font-weight: 800;
+    white-space: nowrap;
 }
 
 .case-form-grid input,

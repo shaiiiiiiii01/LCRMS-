@@ -342,7 +342,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const markRequiredAdminCaseLabels = (root = document) => {
         adminRequiredCaseFields.forEach((name) => {
             const field = root.querySelector(`[name="${name}"]`);
-            const label = field?.closest(".form-group")?.querySelector("label");
+            const group = field?.closest(".form-group");
+            const label = group?.querySelector(".case-choice-label") || group?.querySelector("label");
 
             label?.classList.add("is-required");
         });

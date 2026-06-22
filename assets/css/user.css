@@ -605,7 +605,7 @@ svg {
     overflow-x: hidden;
     padding-left: 280px;
     background: var(--page);
-    transition: padding-left 180ms ease;
+    transition: padding-left 280ms ease;
 }
 
 .user-sidebar {
@@ -626,7 +626,7 @@ svg {
     border-right: 1px solid rgba(151, 184, 214, 0.62);
     box-shadow: 14px 0 34px rgba(24, 35, 52, 0.08);
     z-index: 30;
-    transition: transform 180ms ease;
+    transition: transform 280ms ease;
 }
 
 .sidebar-brand {
@@ -1884,15 +1884,20 @@ body.sidebar-collapsed .user-sidebar {
 
 .case-form-grid label.is-required::after,
 .case-choice-label.is-required::after {
-    content: " *";
+    content: "*";
     color: #e11d48;
     font-weight: 900;
 }
 
 .case-choice-label {
+    width: fit-content;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
     color: #151a23;
     font-size: 14px;
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .case-form-grid input,
@@ -2226,7 +2231,7 @@ body.sidebar-collapsed .user-sidebar {
         position: fixed;
         left: 0;
         transform: translateX(-100%);
-        transition: transform 180ms ease;
+        transition: transform 280ms ease;
     }
 
     body.sidebar-collapsed .user-sidebar {
