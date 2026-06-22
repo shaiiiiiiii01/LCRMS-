@@ -10,3 +10,4 @@ require_once __DIR__ . '/controllers/UserController.php';
 
 $controller = new UserController(new UserModel($conn));
 $controller->handle();
+

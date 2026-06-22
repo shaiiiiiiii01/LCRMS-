@@ -482,3 +482,4 @@ try {
         'message' => $exception->getMessage(),
     ]);
 }
+

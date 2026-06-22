@@ -168,3 +168,4 @@ function lcrms_destroy_session(string $redirectPath): void
     exit;
 }
 ?>
+

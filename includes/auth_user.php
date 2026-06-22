@@ -25,3 +25,4 @@ function require_user_login(string $loginPath = '../login.php'): void
     }
 }
 ?>
+

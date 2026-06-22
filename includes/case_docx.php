@@ -203,3 +203,4 @@ function lcrms_case_docx_filename(array $case): string
 
     return ($caseNumber === '' ? 'case-details' : $caseNumber) . '.docx';
 }
+

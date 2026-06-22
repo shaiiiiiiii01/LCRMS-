@@ -8,3 +8,4 @@ $footerYear = $footerYear ?? '2026';
         <span>LCRMS_v1.0.0</span>
     </div>
 </footer>
+

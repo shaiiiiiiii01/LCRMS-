@@ -3,3 +3,4 @@
 // Existing admin pages use admin/auth.php directly.
 require_once __DIR__ . '/../admin/auth.php';
 ?>
+

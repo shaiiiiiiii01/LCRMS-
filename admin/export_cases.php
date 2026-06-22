@@ -165,3 +165,4 @@ header('Content-Disposition: attachment; filename="' . $filename . '"');
 header('Content-Length: ' . strlen($xlsx));
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 echo $xlsx;
+

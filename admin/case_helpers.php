@@ -127,3 +127,4 @@ function admin_case_selected(string $current, string $value): string
 {
     return $current === $value ? ' selected' : '';
 }
+

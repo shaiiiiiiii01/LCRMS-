@@ -20,3 +20,4 @@ $footerStatusClass = $footerStatusClass ?? '';
         </div>
     <?php endif; ?>
 </footer>
+

@@ -1979,3 +1979,4 @@ document.addEventListener("DOMContentLoaded", () => {
     loadAdminProfile().catch((error) => showToast(error.message));
     loadUsers().catch((error) => showToast(error.message));
 });
+
